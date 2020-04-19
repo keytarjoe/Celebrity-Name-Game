@@ -1,19 +1,57 @@
+
+/*
+gameState = {
+ {
+  type: "inlobby",.
+  playerNameEntered: false,
+ },
+ {
+ type: "ingame",.
+ celebNamesEntered: false,
+ },
+ {
+ type: "end",
+ },
+}
+switch gameState.type {
+case "inlobby":
+ if (gameState.hasEnteredNames) {
+ 
+}    
+case "ingame":
+
+}
+*/
 var socket = io();
 var roomCode;
-/*
-{
-    lobby: {
-        logging-in: ["Joe", "Gabe", "Lee"],
-        suggesting: ["Luke", "Sam"]
-    },
-    in-play: {
-        my-turn: [],
-        not-my-turn: []
-    },
-    end: false
-}
-*/ 
 var gameState;
+
+function gameMaster() {
+    switch (gameState.type) {
+        case "in-lobby":
+            if (gameState.playerNameEntered) {
+
+            } else {
+
+            };
+            break;
+        case "in-game":
+            if (gameState.celebNamesEntered) {
+
+            } else {
+
+            };
+            break;
+        case "end":
+            break;
+        default:
+            console.log("Error regarding " + gameState);
+    };
+};
+
+function createRoom() {
+    
+}
 
 //Create or Join a Room
 $("#create-room-button").click(function() {
@@ -48,28 +86,7 @@ $("#start-game-button").click(function() {
     socket.emit("startGame", { roomCode: roomCode});
 })
 
-/*Submit Player Name
-$("#player-name-button").click(function() {
-    var playerName = $("#player-name").val();
-    
-    if (playerName === "") {
-        alert("Name Please");
-    } else {
-        Cookies.set('player', playerName);
-        console.log("Cookie is " + Cookies.get('player'));
-        $.ajax({
-            method: "POST",
-            url: "/pushplayer",
-            data: {player_name: playerName, room_code: roomCode}
-        })
-            .done(function() {
-                console.log("Player Client Successful");
-                $("#login").css("display","none");
-                $("#suggestions").css("display", "block");
-            });
-    };
-});*/
-
+//Server Responses
 
 socket.on('roomCreated', function(data) {
     console.log(data.roomCode);

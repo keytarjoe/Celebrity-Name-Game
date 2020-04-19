@@ -11,15 +11,9 @@
 			  crossorigin="anonymous"></script>
 </head>
 <body>
-    <!--<div id = "error-container"></div>
-      <input id = "name" type = "text" name = "name" value = "" 
-         placeholder = "Enter your name!">
-      <button type = "button" name = "button" onclick = "setUsername()">
-         Let me chat!
-      </button>-->
-
-    <div id="container">
-
+    <div id="container"></div>
+   
+<!--
         <p>Create a Room or Enter a Room Code</p>
         <button id="create-room-button">Create a Room!</button>
         <p id="or">Or</p>
@@ -38,10 +32,15 @@
 
         <br>
         <p>By clicking Go!, you agree to our <a href="/terms" target="_blank">Terms of Service</a></p>
-    
-    </div>
+-->
 
 <script type="text/javascript" src="/js/client.js"></script>
+<script>
+    $(document).ready{
+        $("#container").append(
+        '<p>Create a Room or Enter a Room Code</p><button id="create-room-button">Create a Room!</button><p id="or">Or</p><input type="text" placeholder="Code Here!" id="join-room" /><button id="join-room-button">Join a Room!</button>');
+    };
+</script>
 </body>
 </html>
 

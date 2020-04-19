@@ -8,9 +8,14 @@ var bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use(require('./routes/index'));
-//app.use(require('./routes/api'));
 app.use(express.static(__dirname + '/client'));
+
+app.get('/', function (req, res) {
+    res.sendFile('index.html', {"root": "./client/html"});
+});
+app.get('/terms', function (req, res) {
+    res.sendFile('terms.html', {"root": "./client/html"});
+});
 
 /*
 Rooms
