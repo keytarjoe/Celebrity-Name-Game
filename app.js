@@ -18,6 +18,7 @@ app.get('/terms', function (req, res) {
 });
 
 /*
+
 Rooms
 {
     roomCode: roomCode,
