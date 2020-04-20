@@ -12,24 +12,38 @@
 </head>
 <body>
     <div id="container"></div>
-   
-        <p>Create a Room or Enter a Room Code</p>
-        <button id="create-room-button">Create a Room!</button>
-        <p id="or">Or</p>
-        <input type="text" placeholder="Code Here!" id="join-room" />
-        <button id="join-room-button">Join a Room!</button>
+        <div id="login-container">
+            <p>Create a Room or Enter a Room Code</p>
+            <button id="create-room-button">Create a Room!</button>
+            <p id="or">Or</p>
+            <input type="text" placeholder="Code Here!" id="join-room" />
+            <input type="text" placeholder="Name Here!" id="player-name"/>
+            <button id="join-room-button">Join a Room!</button>
+        </div>
         
-        <input type="text" placeholder="Name Here!" id="player-name"/>
+        <div id="lobby-container">
 
-        <input type="text" placeholder="First Celeb Here!" id="first-celeb-name"/>
-        <input type="text" placeholder="Second Celeb Here!" id="second-celeb-name"/>
-        <button id="celeb-name-button">Go!</button>
+            <input type="text" placeholder="First Celeb Here!" id="first-celeb-name"/>
+            <input type="text" placeholder="Second Celeb Here!" id="second-celeb-name"/>
+            <button id="celeb-name-button">Go!</button>
+            <p>Waiting for the Other Players...</p>
+            <button id="start-game-button">Start Game!</button>
+        </div>
 
-        <p>Waiting for the Other Players...</p>
+        <div id="game-container">
+            <div id="my-turn-container">
+                <span id="celeb-name"></span>
+                <br />
+                <button id="next-celeb-button">Next!</button>
+                <button id="pass-celeb-button">Pass!</button>
+            </div>
 
-        <button id="start-game-button">Start Game!</button>
-
-        <br>
+            <div>
+                <div id="message">
+                    <p>hi</p>
+                </div>
+            </div>
+        </div>
         <p>By clicking Go!, you agree to our <a href="/terms" target="_blank">Terms of Service</a></p>
 
 <script type="text/javascript" src="/js/client.js"></script>

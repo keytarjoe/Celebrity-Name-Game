@@ -71,19 +71,21 @@ io.on('connection', function (socket) {
         }
    });*/
     let playerName;
+    let roomCode;
 
     socket.on('createRoom', function (data) {
         console.log(data);
-        let roomCode = generateCode(),
-            players = {};
+        roomCode = generateCode();
+        let players = {};
         playerName = data.playerName;
         players[data.playerName] = { playerName: data.playerName, cookie: data.cookie, socket: socket };
         let room = {
             roomCode: roomCode,
             currentPlayerIndex: 0,
-            vip: data.cookie,
+            vip: data.playerName,
             players: players,
-            celebrities: []
+            celebrities: [],
+            guessedCelebrities: []
         };
         rooms[roomCode] = room;
         console.log(room);
@@ -101,10 +103,11 @@ io.on('connection', function (socket) {
             return;
         }
         playerName = data.playerName;
+        roomCode = data.roomCode;
         let player = { playerName: data.playerName, cookie: data.cookie, socket: socket }
         rooms[data.roomCode].players[data.playerName] = player;
         console.log(rooms[data.roomCode]);
-        io.emit('joinedPlayers', { players: Object.keys(rooms[data.roomCode].players) });
+        socket.emit('roomJoined', { players: Object.keys(rooms[data.roomCode].players) });
     });
 
     socket.on('celebNames', function (data) {
@@ -119,10 +122,41 @@ io.on('connection', function (socket) {
     });
 
     socket.on('startGame', function(data) {
+        let room = rooms[data.roomCode];
+        if (playerName !== room.vip) {
+        //if (socket === room.players[room.vip].socket) {}
+            console.log("Cant Start");
+            return;
+        }
         io.emit('gameStarted', "Game Started!");
-        let room = rooms[data.roomCode],
-            playerName = Object.keys(room.players)[room.currentPlayerIndex];
-        room.players[playerName].socket.emit('msg', { celeb: room.celebrities[0] });
+        
+        room.celebrities = shuffle(room.celebrities);
+        let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
+        room.currentCeleb = room.celebrities.pop();
+        //room.currentDescriber = currentDescriber;
+        room.players[currentDescriber].socket.emit('takeTurn', { celeb: room.currentCeleb.celebName });
+    });
+
+    socket.on('requestCeleb', function() {
+        let room = rooms[roomCode];
+        io.emit('celebGuessed', {celeb: room.currentCeleb.celebName});
+        room.guessedCelebrities.push(room.currentCeleb);
+        room.currentCeleb = room.celebrities.pop();
+        let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
+        room.players[currentDescriber].socket.emit('nextCeleb', { celeb: room.currentCeleb.celebName });
+        console.log("Next ", room);
+    });
+
+    socket.on('passCeleb', function(data) {
+        let room = rooms[roomCode];
+        io.emit('celebPassed', {celeb: room.currentCeleb});
+        let passCeleb = room.currentCeleb;
+        room.currentCeleb = room.celebrities.pop();
+        room.celebrities.unshift(passCeleb);
+        room.celebrities = shuffle(room.celebrities);
+        let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
+        room.players[currentDescriber].socket.emit('nextCeleb', { celeb: room.currentCeleb.celebName });
+        console.log("Passed ", room);
     });
 });
 
