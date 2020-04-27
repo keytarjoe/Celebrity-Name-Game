@@ -1,31 +1,19 @@
 
-/*
-gameState = {
- {
-  type: "inlobby",.
-  playerNameEntered: false,
- },
- {
- type: "ingame",.
- celebNamesEntered: false,
- },
- {
- type: "end",
- },
-}
-switch gameState.type {
-case "inlobby":
- if (gameState.hasEnteredNames) {
- 
-}    
-case "ingame":
+var timer = new Date(Date.now()+30*1000) // Countdown will end in 30 sec from now
+var countdown = $("#countdown");
 
+function startCountdown() {
+    //Time until the end of the countdown in ms
+    var deltaTime = timer.getTime() - Date.now();
+    if(deltaTime < 0) {
+      clearInterval(intervalId)
+      deltaTime = 0;
+    }
+    countdown.html(Math.round(deltaTime/1000));
 }
 
-{
-    type: create-button-clicked
-}
-*/
+//var intervalId = setInterval(startCountdown, 1000);
+
 var socket = io();
 var gameState = {
     type: "start"
@@ -34,7 +22,7 @@ var gameState = {
 function handleEvent(event) {
     console.log(gameState.type + " and "+ event.type);
     //1
-    if (gameState.type === "start" && event.type === "create-button-clicked") {
+    if (gameState.type === "start" && event.type === "createButtonClicked") {
         var cookie = 1234;
         socket.emit('clientEvent',
         {
@@ -44,7 +32,7 @@ function handleEvent(event) {
         });
     }
     //2
-    else if (gameState.type === "start" && event.type === "join-button-clicked") {
+    else if (gameState.type === "start" && event.type === "joinButtonClicked") {
         gameState.roomCode = event.roomCode;
         var cookie = 1234;
         socket.emit('clientEvent',
@@ -56,23 +44,25 @@ function handleEvent(event) {
         });
     }
     //3
-    else if (gameState.type === "start" && event.type === "room-created") {
-        gameState.type = "in-lobby";
+    else if (gameState.type === "start" && event.type === "roomCreated") {
+        gameState.type = "inLobby";
         gameState.roomCode = event.roomCode; //Change
         $("#container").prepend(event.roomCode);
         $("#login-container").hide();
         $("#lobby-container").show();
+        $("#start-game-button").css("display", "block");
         //socket.emit('clientEvent', {event: "lobbyPhase"});
     }
     //4
-    else if (gameState.type === "start" && event.type === "room-joined") {
-        gameState.type = "in-lobby";
+    else if (gameState.type === "start" && event.type === "roomJoined") {
+        gameState.type = "inLobby";
         $("#login-container").hide();
         $("#lobby-container").show();
         //socket.emit('clientEvent', {event: "lobbyPhase"});
     }
     //5
-    else if (gameState.type === "in-lobby" && event.type === "celeb-button-clicked") {
+    else if (gameState.type === "inLobby" && event.type === "celebNameButtonClicked") {
+        $("#first-celeb-name, #second-celeb-name, #celeb-name-button").hide();
         socket.emit('clientEvent',
         {
             firstCelebName: event.firstCelebName,
@@ -82,48 +72,66 @@ function handleEvent(event) {
         });
     }
     //6
-    else if (gameState.type === "in-lobby" && event.type === "start-button-clicked") {
+    else if (gameState.type === "inLobby" && event.type === "startGameButtonClicked") {
         socket.emit("clientEvent", {roomCode: gameState.roomCode, event: "startGame"});
     }
     //7
-    else if (gameState.type === "in-lobby" && event.type === "game-started") {
-        gameState.type = "in-game";
-        $("#lobby-container").hide();
-        $("#game-container").show();
+    else if (gameState.type === "inLobby" && event.type === "gameStarted") {
+        gameState.type = "inGame";
+        $("#lobby-container").css("display", "none");
+        $("#game-container").css("display", "block");
     }
     //8
-    else if (gameState.type === "in-game" && event.type === "next-celeb-button-clicked" && gameState.myTurn) {
+    else if (gameState.type === "inGame" && event.type === "yourRound") {
+        gameState.myTurn = true;
+        $("#my-turn-container").show();
+        /*$("#celeb-name").html("Describe " + event.celeb);
+        console.log("Describe " + event.celeb);*/
+    }
+    //9
+    else if (gameState.type === "inGame" && event.type === "startRoundButtonClicked") {
+        socket.emit("clientEvent", { roomCode: gameState.roomCode, event: "startRound" });
+        $("#next-celeb-button, #pass-celeb-button").show();
+        setTimeout(function() {
+            console.log("No more time");
+        }, 10000);
+    }
+    //10
+    else if (gameState.type === "inGame" && event.type === "nextCelebButtonClicked" && gameState.myTurn) {
         socket.emit('clientEvent', {event: "requestCeleb"});
     }
 
-    else if (gameState.type === "in-game" && event.type === "take-turn") {
-        gameState.myTurn = true;
-        $("#my-turn-container").show();
-        $("#celeb-name").html("Describe " + event.celeb);
-        console.log("Describe " + event.celeb);
-    }
-
-    else if (gameState.type === "in-game" && event.type === "next-celeb" && gameState.myTurn) {
+    else if (gameState.type === "inGame" && event.type === "nextCeleb" && gameState.myTurn) {
         console.log("Describe " + event.celeb);
         $("#celeb-name").html("Describe " + event.celeb);
     }
 
-    else if (gameState.type === "in-game" && event.type === "celeb-guessed") {
+    else if (gameState.type === "inGame" && event.type === "celebGuessed") {
         console.log(event.celeb + " guessed!");
         $("#message").append("<br />" + event.celeb + " guessed!");
     }
     //9
-    else if (gameState.type === "in-game" && event.type === "pass-celeb-button-clicked" && gameState.myTurn) {
+    else if (gameState.type === "inGame" && event.type === "passCelebButtonClicked" && gameState.myTurn) {
         socket.emit('clientEvent', {event: "passCeleb"});
     }
 
-    else if (gameState.type === "in-game" && event.type === "celeb-passed") {
+    else if (gameState.type === "inGame" && event.type === "celebPassed") {
         console.log("Celebrity passed!");
+        $("#pass-celeb-button").hide();
         $("#message").append("<br />Celebrity passed!");
     }
 
+    else if (gameState.type === "inGame" && event.type === "endRound" && gameState.myTurn){
+        gameState.myTurn = false;
+        $("#my-turn-container").css("display", "none");
+    }
+
+    else if (gameState.type === "inGame" && event.type === "noPass") {
+        $("#celeb-name").html("Out of Passes! Describe " + event.celeb);
+    }
+
     else {
-        console.log("Game State " + gameState + " Unhandled event" + event + "Error");
+        console.log("Client: Game State ", gameState, " Unhandled event", event, "Error");
     };
     
 };
@@ -137,7 +145,7 @@ $("#create-room-button").click(function () {
         console.log("HEY YOUR NAME IDIOTLASK Hfujkgh ku");
         return;
     } 
-    handleEvent({ type: "create-button-clicked", playerName: playerName });
+    handleEvent({ type: "createButtonClicked", playerName: playerName });
 });
 
 $("#join-room-button").click(function () {
@@ -147,7 +155,7 @@ $("#join-room-button").click(function () {
         console.log("HEY IDIOTLASK Hfujkgh ku");
         return;
     } 
-    handleEvent({ type: "join-button-clicked", playerName: playerName, roomCode: roomCode });
+    handleEvent({ type: "joinButtonClicked", playerName: playerName, roomCode: roomCode });
 });
 
 //Submit Celebrity Names
@@ -157,24 +165,81 @@ $("#celeb-name-button").click(function () {
     if (firstCelebName === '' || secondCelebName === '') {
         alert("Two Names Please!");
     } else {
-        handleEvent({ type: "celeb-button-clicked", firstCelebName: firstCelebName, secondCelebName: secondCelebName });
+        handleEvent({ type: "celebNameButtonClicked", firstCelebName: firstCelebName, secondCelebName: secondCelebName });
     };
 });
 
 $("#start-game-button").click(function () {
-    handleEvent({ type: "start-button-clicked" });
+    handleEvent({ type: "startGameButtonClicked" });
+});
+
+$("#start-round-button").click(function () {
+    handleEvent({ type: "startRoundButtonClicked" })
 });
 
 $("#next-celeb-button").click(function () {
-    handleEvent({type: "next-celeb-button-clicked"});
+    handleEvent({ type: "nextCelebButtonClicked" });
 });
 
 $("#pass-celeb-button").click(function () {
-    handleEvent({type: "pass-celeb-button-clicked"});
+    handleEvent({ type: "passCelebButtonClicked" });
 });
 
 //Server Responses
 
+socket.on('serverEvent', function (data) {
+    handleEvent(data);
+
+    /*if (data.event === "roomCreated") {
+        handleEvent({ type: "roomCreated", roomCode: data.roomCode })
+    }
+
+    else if (data.event === "roomJoined") {
+        handleEvent({ type: "roomJoined"});
+    }
+
+    else if (data.event === "gameStarted") {
+        handleEvent({ type: "gameStarted"});
+    }
+
+    else if (data.event === "yourRound") {
+        handleEvent({ type: "yourRound" });
+    }
+
+    else if (data.event === "roundStarted") {
+        handleEvent({ type: "round-started"});
+    }
+
+    else if (data.event === "yourTurn") {
+        handleEvent({ type: "yourTurn", celeb: data.celeb });
+    }
+
+    else if (data.event === "theirTurn") {
+        handleEvent({ type: "theirTurn"})
+    }
+
+    else if (data.event === "celebGuessed") {
+        handleEvent({ type: "celebGuessed", celeb: data.celeb });
+    }
+
+    else if (data.event === "nextCeleb") {
+        handleEvent({ type: "nextCeleb", celeb: data.celeb });
+    }
+
+    else if (data.event === "celebPassed") {
+        handleEvent({ type: "celebPassed"});
+    }
+
+    else if (data.event === "error2") {
+        console.log(data);    
+    }
+
+    else {
+        console.log("Unhandled event ", data.type);
+    }*/
+});
+
+/*
 socket.on('roomCreated', function (data) {
     handleEvent({ type: "room-created", roomCode: data.roomCode });
 });
@@ -206,3 +271,4 @@ socket.on('celebPassed', function (data) {
 socket.on('error2', function (data) {
     console.log(data);
 });
+*/

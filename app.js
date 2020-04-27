@@ -17,6 +17,12 @@ app.get('/terms', function (req, res) {
     res.sendFile('terms.html', {"root": "./client/html"});
 });
 
+var rooms = {};
+var gameState = {
+    type: "start"
+};
+var timer = new Date(Date.now()+30*1000);
+
 //Functions
 function generateCode() {
     var result = '';
@@ -43,11 +49,6 @@ function shuffle(array) {
 };
 
 //Event Listener
-var rooms = {};
-var gameState = {
-    type: "start"
-};
-
 io.on('connection', function (socket) {
     console.log('A user connected');
 
@@ -68,22 +69,23 @@ io.on('connection', function (socket) {
                 vip: data.playerName,
                 players: players,
                 celebrities: [],
-                guessedCelebrities: []
+                guessedCelebrities: [],
+                playerOrder: []
             };
             rooms[roomCode] = room;
             console.log(room);
-            gameState.type = "in-lobby";
-            socket.emit('roomCreated', { roomCode: roomCode });
+            gameState.type = "inLobby";
+            socket.emit('serverEvent', { roomCode: roomCode, type: "roomCreated" });
         }
         //2
-        else if (gameState.type === "in-lobby" && data.event === "joinRoom") {
+        else if (gameState.type === "inLobby" && data.event === "joinRoom") {
             console.log(data);
             if (!(data.roomCode in rooms)) {
-                socket.emit('error2', { error: "Room does not exist! bitch" });
+                socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
                 return;
             }
             if (data.playerName in rooms[data.roomCode].players) {
-                socket.emit('error2', { error: "Player Name exists already! slut" });
+                socket.emit('serverEvent', { error: "Player Name exists already! slut", type: "error2" });
                 return;
             }
             playerName = data.playerName;
@@ -91,16 +93,16 @@ io.on('connection', function (socket) {
             let player = { playerName: data.playerName, cookie: data.cookie, socket: socket }
             rooms[data.roomCode].players[data.playerName] = player;
             console.log(rooms[data.roomCode]);
-            socket.emit('roomJoined', { players: Object.keys(rooms[data.roomCode].players) });
+            socket.emit('serverEvent', { players: Object.keys(rooms[data.roomCode].players), type: "roomJoined" });
         }
         //3 & 4
         /*else if (gameState.type === "start" && data.event === "lobbyPhase") {
             gameState.type = "in-lobby";
         }*/
         //5
-        else if (gameState.type === "in-lobby" && data.event === "celebNames") {
+        else if (gameState.type === "inLobby" && data.event === "celebNames") {
             if (!(data.roomCode in rooms)) {
-                socket.emit('error2', { error: "Room does not exist! bitch" });
+                socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
                 return;
             }
             rooms[data.roomCode].celebrities.push({ playerName: playerName, celebName: data.firstCelebName });
@@ -108,46 +110,66 @@ io.on('connection', function (socket) {
             console.log(rooms[data.roomCode]);
         }
         //6 & 7
-        else if (gameState.type === "in-lobby" && data.event === "startGame") {
+        else if (gameState.type === "inLobby" && data.event === "startGame") {
             let room = rooms[data.roomCode];
             if (playerName !== room.vip) {
-            //if (socket === room.players[room.vip].socket) {}
+            //if (socket === room.players[room.vip].socket) {
                 console.log("Cant Start");
                 return;
             }
-            gameState.type = "in-game";
-            io.emit('gameStarted', "Game Started!");
-            room.celebrities = shuffle(room.celebrities);
-            let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
-            room.currentCeleb = room.celebrities.pop();
-            //room.currentDescriber = currentDescriber;
-            room.players[currentDescriber].socket.emit('takeTurn', { celeb: room.currentCeleb.celebName });
+            gameState.type = "inGame";
+            room.playerOrder = shuffle(Object.keys(room.players));
+            console.log("playerOrder ", room.playerOrder);
+            let currentDescriber = room.playerOrder[room.currentPlayerIndex];
+            console.log("currentDescriber ", currentDescriber);
+            io.emit('serverEvent', { type: "gameStarted" });
+            room.players[currentDescriber].socket.emit('serverEvent', { type: "yourRound"});
         }
         //8
-        else if (gameState.type === "in-game" && data.event === "requestCeleb") {
-            let room = rooms[roomCode];
-            io.emit('celebGuessed', {celeb: room.currentCeleb.celebName});
-            room.guessedCelebrities.push(room.currentCeleb);
+        else if (gameState.type === "inGame" && data.event === "startRound") {
+            let room = rooms[data.roomCode];
+            room.celebrities = shuffle(room.celebrities);
+            let currentDescriber = room.playerOrder[room.currentPlayerIndex];
             room.currentCeleb = room.celebrities.pop();
-            let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
-            room.players[currentDescriber].socket.emit('nextCeleb', { celeb: room.currentCeleb.celebName });
-            console.log("Next ", room);
+            //io.emit('serverEvent', { type: "roundStarted"});
+            //room.currentDescriber = currentDescriber; Don't need?
+            room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.currentCeleb.celebName, type: "nextCeleb"});
+            setTimeout(function () {
+                room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.currentCeleb.celebName, type: "endRound"});
+                room.currentPlayerIndex += 1;
+                currentDescriber = room.playerOrder[room.currentPlayerIndex];
+                room.players[currentDescriber].socket.emit('serverEvent', { type: "yourRound"});
+            }, 10000);
         }
         //9
-        else if (gameState.type === "in-game" && data.event === "passCeleb") {
+        else if (gameState.type === "inGame" && data.event === "requestCeleb") {
             let room = rooms[roomCode];
-            io.emit('celebPassed', {celeb: room.currentCeleb});
+            io.emit('serverEvent', { celeb: room.currentCeleb.celebName, type: "celebGuessed" });
+            room.guessedCelebrities.push(room.currentCeleb);
+            room.currentCeleb = room.celebrities.pop();
+            let currentDescriber = room.playerOrder[room.currentPlayerIndex];
+            room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.currentCeleb.celebName, type: "nextCeleb" });
+            console.log("Next ", room);
+        }
+        //10
+        else if (gameState.type === "inGame" && data.event === "passCeleb") {
+            let room = rooms[roomCode];
+            io.emit('serverEvent', { celeb: room.currentCeleb, type: "celebPassed" });
             let passCeleb = room.currentCeleb;
             room.currentCeleb = room.celebrities.pop();
             room.celebrities.unshift(passCeleb);
             room.celebrities = shuffle(room.celebrities);
             let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
-            room.players[currentDescriber].socket.emit('nextCeleb', { celeb: room.currentCeleb.celebName });
+            room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.currentCeleb.celebName, type: "nextCeleb" });
             console.log("Passed ", room);
         }
 
+        /*else if (gameState.type === "in-game" && data.event === "endRound") {
+
+        }*/
+
         else {
-            console.log("Game State ", gameState, ", Unhandled event ", data.event, " Error");
+            console.log("Server: Game State ", gameState, ", Unhandled event ", data.event, " Error");
         };
     });
 });

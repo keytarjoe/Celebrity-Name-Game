@@ -11,18 +11,21 @@
 			  crossorigin="anonymous"></script>
 </head>
 <body>
+    
+    <div id="countdown"></div>
+
     <div id="container"></div>
         <div id="login-container">
             <p>Create a Room or Enter a Room Code</p>
+            <p><input type="text" placeholder="Code Here!" id="join-room" /></p>
             <button id="create-room-button">Create a Room!</button>
-            <p id="or">Or</p>
-            <input type="text" placeholder="Code Here!" id="join-room" />
-            <input type="text" placeholder="Name Here!" id="player-name"/>
+            <span id="or">Or</span>
             <button id="join-room-button">Join a Room!</button>
+            <br />
+            <input type="text" placeholder="Name Here!" id="player-name"/>
         </div>
         
         <div id="lobby-container">
-
             <input type="text" placeholder="First Celeb Here!" id="first-celeb-name"/>
             <input type="text" placeholder="Second Celeb Here!" id="second-celeb-name"/>
             <button id="celeb-name-button">Go!</button>
@@ -32,15 +35,14 @@
 
         <div id="game-container">
             <div id="my-turn-container">
+                <button id="start-round-button">You're up. Start Round!</button>
                 <span id="celeb-name"></span>
                 <br />
                 <button id="next-celeb-button">Next!</button>
-                <button id="pass-celeb-button">Pass!</button>
+                <button id="pass-celeb-button">Pass! (1)</button>
             </div>
-
             <div>
                 <div id="message">
-                    <p>hi</p>
                 </div>
             </div>
         </div>

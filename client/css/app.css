@@ -3,6 +3,10 @@
     padding: 0;
 }
 
-#lobby-container, #game-container, #my-turn-container {
+#lobby-container, #game-container, #my-turn-container, #start-game-button {
+    display: none;
+}
+
+#next-celeb-button, #pass-celeb-button {
     display: none;
 }
