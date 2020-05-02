@@ -54,23 +54,36 @@ io.on('connection', function (socket) {
 
     let playerName;
     let roomCode;
+    let room;
+    /*let playerState = {
+        playerName: null,
+        roomCode: null,
+        socket: socket
+    }*/
 
     socket.on('clientEvent', function(data) {
+        handleEvent(data);
+    });
+
+    function handleEvent(data) {
         //1
         if (gameState.type === "start" && data.event === "createRoom") {
             console.log(data);
             roomCode = generateCode();
-            let players = {};
+            //roomCode = data.roomCode;
             playerName = data.playerName;
+            let players = {};
             players[data.playerName] = { playerName: data.playerName, cookie: data.cookie, socket: socket };
-            let room = {
+            room = {
                 roomCode: roomCode,
                 currentPlayerIndex: 0,
                 vip: data.playerName,
                 players: players,
                 celebrities: [],
                 guessedCelebrities: [],
-                playerOrder: []
+                playerOrder: [],
+                team1: [],
+                team2: []
             };
             rooms[roomCode] = room;
             console.log(room);
@@ -119,15 +132,23 @@ io.on('connection', function (socket) {
             }
             gameState.type = "inGame";
             room.playerOrder = shuffle(Object.keys(room.players));
+            for (var i = 0, l = room.playerOrder.length; i < l; i+=2) {
+                room.team1[i/2] = room.playerOrder[i];
+                room.team2[i/2] = room.playerOrder[i+1];
+            }
+            if (room.playerOrder.length % 2) {
+                room.team2.pop();
+            }
             console.log("playerOrder ", room.playerOrder);
+            console.log("Team 1 ", room.team1, " and Team 2 ", room.team2);
+            console.log(room.players);
             let currentDescriber = room.playerOrder[room.currentPlayerIndex];
-            console.log("currentDescriber ", currentDescriber);
             io.emit('serverEvent', { type: "gameStarted" });
             room.players[currentDescriber].socket.emit('serverEvent', { type: "yourRound"});
         }
         //8
         else if (gameState.type === "inGame" && data.event === "startRound") {
-            let room = rooms[data.roomCode];
+            let room = rooms[roomCode];
             room.celebrities = shuffle(room.celebrities);
             let currentDescriber = room.playerOrder[room.currentPlayerIndex];
             room.currentCeleb = room.celebrities.pop();
@@ -137,6 +158,10 @@ io.on('connection', function (socket) {
             setTimeout(function () {
                 room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.currentCeleb.celebName, type: "endRound"});
                 room.currentPlayerIndex += 1;
+                if (room.currentPlayerIndex === room.playerOrder.length) {
+                    room.currentPlayerIndex = 0;
+                }
+                console.log("PLayer Index is now " + room.currentPlayerIndex);
                 currentDescriber = room.playerOrder[room.currentPlayerIndex];
                 room.players[currentDescriber].socket.emit('serverEvent', { type: "yourRound"});
             }, 10000);
@@ -167,11 +192,10 @@ io.on('connection', function (socket) {
         /*else if (gameState.type === "in-game" && data.event === "endRound") {
 
         }*/
-
         else {
             console.log("Server: Game State ", gameState, ", Unhandled event ", data.event, " Error");
         };
-    });
+    };
 });
 
 http.listen(8888, function () {

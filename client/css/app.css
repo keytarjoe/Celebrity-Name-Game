@@ -10,3 +10,33 @@
 #next-celeb-button, #pass-celeb-button {
     display: none;
 }
+
+.timerBar {
+    width: 500px;
+    margin: 25px auto;
+    border: solid 1px #000;
+}
+
+.timerBar .inner {
+    height: 15px;
+    animation: timerBar-countdown;
+    animation-duration: 40s;
+    animation-iteration-count: 1;
+    animation-fill-mode: forwards;
+    animation-play-state: paused;
+    animation-timing-function: linear;
+}
+
+@keyframes timerBar-countdown {
+    0% {
+        width: 100%;
+        background: #0f0;
+    }
+    75% {
+        background: #0f0;
+    }
+    100% {
+        width: 0%;
+        background: #f00;
+    }
+}

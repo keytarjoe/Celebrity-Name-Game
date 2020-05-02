@@ -1,23 +1,9 @@
-
-var timer = new Date(Date.now()+30*1000) // Countdown will end in 30 sec from now
-var countdown = $("#countdown");
-
-function startCountdown() {
-    //Time until the end of the countdown in ms
-    var deltaTime = timer.getTime() - Date.now();
-    if(deltaTime < 0) {
-      clearInterval(intervalId)
-      deltaTime = 0;
-    }
-    countdown.html(Math.round(deltaTime/1000));
-}
-
-//var intervalId = setInterval(startCountdown, 1000);
-
 var socket = io();
 var gameState = {
     type: "start"
 };
+
+//Event Handler
 
 function handleEvent(event) {
     console.log(gameState.type + " and "+ event.type);
@@ -90,11 +76,14 @@ function handleEvent(event) {
     }
     //9
     else if (gameState.type === "inGame" && event.type === "startRoundButtonClicked") {
-        socket.emit("clientEvent", { roomCode: gameState.roomCode, event: "startRound" });
+        socket.emit("clientEvent", { event: "startRound" });
         $("#next-celeb-button, #pass-celeb-button").show();
-        setTimeout(function() {
+        /*setTimeout(function() {
             console.log("No more time");
-        }, 10000);
+        }, 10000);*/
+        createTimerBar('timerBar', '10s', function() {
+            $("#message").append("No more time!");
+        });
     }
     //10
     else if (gameState.type === "inGame" && event.type === "nextCelebButtonClicked" && gameState.myTurn) {
@@ -138,7 +127,6 @@ function handleEvent(event) {
 
 //Button Clicks
 
-//Create or Join a Room
 $("#create-room-button").click(function () {
     var playerName = $("#player-name").val();
     if (playerName === "" ) {
@@ -158,7 +146,6 @@ $("#join-room-button").click(function () {
     handleEvent({ type: "joinButtonClicked", playerName: playerName, roomCode: roomCode });
 });
 
-//Submit Celebrity Names
 $("#celeb-name-button").click(function () {
     var firstCelebName = $("#first-celeb-name").val();
     var secondCelebName = $("#second-celeb-name").val();
@@ -189,55 +176,55 @@ $("#pass-celeb-button").click(function () {
 
 socket.on('serverEvent', function (data) {
     handleEvent(data);
-
-    /*if (data.event === "roomCreated") {
-        handleEvent({ type: "roomCreated", roomCode: data.roomCode })
-    }
-
-    else if (data.event === "roomJoined") {
-        handleEvent({ type: "roomJoined"});
-    }
-
-    else if (data.event === "gameStarted") {
-        handleEvent({ type: "gameStarted"});
-    }
-
-    else if (data.event === "yourRound") {
-        handleEvent({ type: "yourRound" });
-    }
-
-    else if (data.event === "roundStarted") {
-        handleEvent({ type: "round-started"});
-    }
-
-    else if (data.event === "yourTurn") {
-        handleEvent({ type: "yourTurn", celeb: data.celeb });
-    }
-
-    else if (data.event === "theirTurn") {
-        handleEvent({ type: "theirTurn"})
-    }
-
-    else if (data.event === "celebGuessed") {
-        handleEvent({ type: "celebGuessed", celeb: data.celeb });
-    }
-
-    else if (data.event === "nextCeleb") {
-        handleEvent({ type: "nextCeleb", celeb: data.celeb });
-    }
-
-    else if (data.event === "celebPassed") {
-        handleEvent({ type: "celebPassed"});
-    }
-
-    else if (data.event === "error2") {
-        console.log(data);    
-    }
-
-    else {
-        console.log("Unhandled event ", data.type);
-    }*/
 });
+
+/*if (data.event === "roomCreated") {
+    handleEvent({ type: "roomCreated", roomCode: data.roomCode })
+}
+
+else if (data.event === "roomJoined") {
+    handleEvent({ type: "roomJoined"});
+}
+
+else if (data.event === "gameStarted") {
+    handleEvent({ type: "gameStarted"});
+}
+
+else if (data.event === "yourRound") {
+    handleEvent({ type: "yourRound" });
+}
+
+else if (data.event === "roundStarted") {
+    handleEvent({ type: "round-started"});
+}
+
+else if (data.event === "yourTurn") {
+    handleEvent({ type: "yourTurn", celeb: data.celeb });
+}
+
+else if (data.event === "theirTurn") {
+    handleEvent({ type: "theirTurn"})
+}
+
+else if (data.event === "celebGuessed") {
+    handleEvent({ type: "celebGuessed", celeb: data.celeb });
+}
+
+else if (data.event === "nextCeleb") {
+    handleEvent({ type: "nextCeleb", celeb: data.celeb });
+}
+
+else if (data.event === "celebPassed") {
+    handleEvent({ type: "celebPassed"});
+}
+
+else if (data.event === "error2") {
+    console.log(data);    
+}
+
+else {
+    console.log("Unhandled event ", data.type);
+}*/
 
 /*
 socket.on('roomCreated', function (data) {
