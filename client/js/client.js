@@ -2,6 +2,7 @@ var socket = io();
 var gameState = {
     type: "start"
 };
+ 
 
 //Event Handler
 
@@ -9,7 +10,7 @@ function handleEvent(event) {
     console.log(gameState.type + " and "+ event.type);
     //1
     if (gameState.type === "start" && event.type === "createButtonClicked") {
-        var cookie = 1234;
+        let cookie = 1234;
         socket.emit('clientEvent',
         {
             playerName: event.playerName, 
@@ -20,7 +21,7 @@ function handleEvent(event) {
     //2
     else if (gameState.type === "start" && event.type === "joinButtonClicked") {
         gameState.roomCode = event.roomCode;
-        var cookie = 1234;
+        let cookie = 1234;
         socket.emit('clientEvent',
         {
             playerName: event.playerName,
@@ -117,6 +118,12 @@ function handleEvent(event) {
 
     else if (gameState.type === "inGame" && event.type === "noPass") {
         $("#celeb-name").html("Out of Passes! Describe " + event.celeb);
+    }
+
+    else if (gameState.type === "inGame" && event.type === "gameEnded") {
+        gameState.type = "end";
+        $("#game-container").css("display", "none");
+        $("#end-container").css("display", "block");
     }
 
     else {
