@@ -17,35 +17,31 @@ app.get('/terms', function (req, res) {
     res.sendFile('terms.html', { "root": "./client/html" });
 });
 
+//Event Listener
+io.on('connection', function (socket) {
+    console.log('A user connected');
+
+    var room;
+
+    socket.on('clientEvent', function (data) {
+        handleEvent(room, socket, data);
+    });
+
+});
+
+http.listen(8888, function () {
+    console.log('listening on 8888');
+});
+
 var rooms = {};
-var gameState = {
-    type: "start"
-};
-var timer = new Date(Date.now() + 30 * 1000);
+//var gameState = {type: "start"};
 
 //Functions
 
 function emitRoom(room, message) {
-    /*for (let player in room.players) {
-        console.log(player);
-        io.to(player.socketId).emit('serverEvent', message);
-    }*/
     Object.values(room.players).forEach(function (player) {
-        console.log(player);
         io.to(player.socketId).emit('serverEvent', message);
     })
-}
-
-function emitTeam1(room, message) {
-    for (let playerName in room.team1) {
-        room.players[playerName].socketId.emit('serverEvent', message);
-    }
-}
-
-function emitTeam2(room, message) {
-    for (let playerName in room.team2) {
-        room.players[playerName].socket.emit('serverEvent', message);
-    }
 }
 
 function emitPlayer(player, message) {
@@ -76,173 +72,164 @@ function shuffle(array) {
     return array;
 }
 
-//Event Listener
-io.on('connection', function (socket) {
-    console.log('A user connected');
+function score(room) {
+    if (room.team1.members.includes(room.currentDescriber)) {
+        room.team1.score += 1;
+    } else if (room.team2.members.includes(room.currentDescriber)) {
+        room.team2.score += 1;
+    }
+};
+
+function handleEvent(room, socket, data) {
 
     let playerName;
     let roomCode;
-    let room;
-    /*let playerState = {
-        playerName: null,
-        roomCode: null,
-        socket: socket
-    }*/
+    let roundTimer;
+    let lobbyInterval;
+    
+    console.log("Global variable is ", room);
 
-    socket.on('clientEvent', function (data) {
-        handleEvent(data);
-    });
-
-    function handleEvent(data) {
-        //1
-        if (gameState.type === "start" && data.event === "createRoom") {
-            console.log(data);
-            roomCode = generateCode();
-            //roomCode = data.roomCode;
-            playerName = data.playerName;
-            let players = {};
-            players[data.playerName] = { playerName: data.playerName, cookie: data.cookie, socketId: socket.id };
-            room = {
-                roomCode: roomCode,
-                currentPlayerIndex: 0,
-                vip: data.playerName,
-                players: players,
-                celebrities: [],
-                guessedCelebrities: [],
-                playerOrder: [],
-                team1: [],
-                team2: []
-            };
-            rooms[roomCode] = room;
-            console.log(room);
-            gameState.type = "inLobby";
-            //socket.emit('serverEvent', { roomCode: roomCode, type: "roomCreated" });
-            emitPlayer(players[data.playerName], { roomCode: roomCode, type: "roomCreated" });
+    //1
+    if (data.event === "createRoom") {
+        console.log(data);
+        roomCode = generateCode();
+        playerName = data.playerName;
+        let players = {};
+        players[data.playerName] = { playerName: data.playerName, cookie: data.cookie, socketId: socket.id };
+        let roomObject = {
+            gameState: {
+                type: "inLobby"
+            },
+            roomCode: roomCode,
+            currentPlayerIndex: 0,
+            vip: data.playerName,
+            players: players,
+            celebrities: [],
+            guessedCelebrities: [],
+            playerOrder: [],
+            team1: {
+                score: 0,
+                members: []
+            },
+            team2: {
+                score: 0,
+                members: []
+            }
+        };
+        rooms[roomCode] = roomObject;
+        room = rooms[roomCode];
+        console.log("Room is ", room);
+        //gameState.type = "inLobby";
+        emitPlayer(players[data.playerName], { roomCode: roomCode, type: "roomCreated" });
+        lobbyInterval = setInterval(function() {
+            emitRoom(room, { type: 'refreshPlayers', players: Object.keys(room.players) });
+        }, 3000);
+    }
+    //2
+    else if (rooms[data.roomCode].gameState.type === "inLobby" && data.event === "joinRoom") {
+        if (!(data.roomCode in rooms)) {
+            socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
+            return;
         }
-        //2
-        else if (gameState.type === "inLobby" && data.event === "joinRoom") {
-            console.log(data);
-            if (!(data.roomCode in rooms)) {
-                socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
-                return;
-            }
-            if (data.playerName in rooms[data.roomCode].players) {
-                socket.emit('serverEvent', { error: "Player Name exists already! slut", type: "error2" });
-                return;
-            }
-            playerName = data.playerName;
-            roomCode = data.roomCode;
-            room = rooms[roomCode];
-            let player = { playerName: data.playerName, cookie: data.cookie, socketId: socket.id }
-            rooms[data.roomCode].players[data.playerName] = player;
-            console.log(rooms[data.roomCode]);
-            socket.emit('serverEvent', { players: Object.keys(rooms[data.roomCode].players), type: "roomJoined" });
+        if (data.playerName in rooms[data.roomCode].players) {
+            socket.emit('serverEvent', { error: "Player Name exists already! slut", type: "error2" });
+            return;
         }
-        //3 & 4
-        /*else if (gameState.type === "start" && data.event === "lobbyPhase") {
-            gameState.type = "in-lobby";
-        }*/
-        //5
-        else if (gameState.type === "inLobby" && data.event === "celebNames") {
-            if (!(data.roomCode in rooms)) {
-                socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
-                return;
-            }
-            rooms[data.roomCode].celebrities.push({ playerName: playerName, celebName: data.firstCelebName });
-            rooms[data.roomCode].celebrities.push({ playerName: playerName, celebName: data.secondCelebName });
-            console.log(rooms[data.roomCode]);
+        room = rooms[data.roomCode];
+        playerName = data.playerName;
+        roomCode = data.roomCode;
+        let player = { playerName: data.playerName, cookie: data.cookie, socketId: socket.id };
+        rooms[data.roomCode].players[data.playerName] = player;
+        console.log(rooms[data.roomCode]);
+        //socket.emit('serverEvent', { players: Object.keys(rooms[data.roomCode].players), type: "roomJoined" });
+        emitPlayer(room.players[data.playerName], { type: "roomJoined" });
+    }
+    //5
+    else if (room.gameState.type === "inLobby" && data.event === "celebNames") {
+        console.log(room);
+        if (!(data.roomCode in rooms)) {
+            socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
+            return;
         }
-        //6 & 7
-        else if (gameState.type === "inLobby" && data.event === "startGame") {
-            let room = rooms[data.roomCode];
-            if (playerName !== room.vip) {
-                //if (socket === room.players[room.vip].socket) {
-                console.log("Cant Start");
-                return;
-            }
-            gameState.type = "inGame";
-            room.playerOrder = shuffle(Object.keys(room.players));
-            for (var i = 0, l = room.playerOrder.length; i < l; i += 2) {
-                room.team1[i / 2] = room.playerOrder[i];
-                room.team2[i / 2] = room.playerOrder[i + 1];
-            }
-            if (room.playerOrder.length % 2) {
-                room.team2.pop();
-            }
-            console.log("playerOrder ", room.playerOrder);
-            console.log("Team 1 ", room.team1, " and Team 2 ", room.team2);
-            console.log(room.players);
-            let currentDescriber = room.playerOrder[room.currentPlayerIndex];
-            //io.emit('serverEvent', { type: "gameStarted" });
-            console.log("StartGame ", room);
-            emitRoom(room, { type: "gameStarted" });
-            //room.players[currentDescriber].socket.emit('serverEvent', { type: "yourRound"});
-            emitPlayer(room.players[currentDescriber], { type: "yourRound" });
+        for ( i = 0; i < data.celebs.length; i++) {
+            room.celebrities.push({ playerName: playerName, celebName: data.celebs[i] });
         }
-        //8
-        else if (gameState.type === "inGame" && data.event === "startRound") {
-            //let room = rooms[roomCode];
-            let currentDescriber = room.playerOrder[room.currentPlayerIndex];
-            room.celebrities = shuffle(room.celebrities);
-            //io.emit('serverEvent', { type: "roundStarted"});
-            //room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.celebrities[0].celebName, type: "nextCeleb"});
-            emitPlayer(room.players[currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
-            setTimeout(function () {
-                //room.players[currentDescriber].socket.emit('serverEvent', { type: "endRound"});
-                emitPlayer(room.players[currentDescriber], { type: "endRound" });
-                room.currentPlayerIndex += 1;
-                if (room.currentPlayerIndex === room.playerOrder.length) {
-                    room.currentPlayerIndex = 0;
-                }
-                console.log("PLayer Index is now " + room.currentPlayerIndex);
-                currentDescriber = room.playerOrder[room.currentPlayerIndex];
-                //room.players[currentDescriber].socket.emit('serverEvent', { type: "yourRound"});
-                emitPlayer(room.players[currentDescriber], { type: "yourRound" });
-            }, 10000);
+        console.log(room.celebrities);
+    }
+    //6 & 7
+    else if (room.gameState.type === "inLobby" && data.event === "startGame") {
+        //let room = rooms[data.roomCode];
+        clearInterval(lobbyInterval);
+        if (playerName !== room.vip) {
+            console.log("Cant Start");
+            return;
         }
-        //9
-        else if (gameState.type === "inGame" && data.event === "requestCeleb") {
-            //let room = rooms[roomCode];
-            //io.emit('serverEvent', { celeb: room.celebrities[0].celebName, type: "celebGuessed" });
-            emitRoom(room, { type: "celebGuessed", celeb: room.celebrities[0].celebName });
-            room.guessedCelebrities.push(room.celebrities.shift());
-            if (room.celebrities.length === 0) {
-                gameState.type = "end";
-                //io.emit('serverEvent', { type: "gameEnded" });
-                emitRoom(room, { type: "gameEnded" })
-            } else {
-                let currentDescriber = room.playerOrder[room.currentPlayerIndex];
-                //room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.celebrities[0].celebName, type: "nextCeleb" });
-                emitPlayer(room.players[currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
-                console.log("Next ", room);
+        gameState.type = "inGame";
+        room.playerOrder = shuffle(Object.keys(room.players));
+        for (var i = 0, l = room.playerOrder.length; i < l; i += 2) {
+            room.team1.members[i / 2] = room.playerOrder[i];
+            room.team2.members[i / 2] = room.playerOrder[i + 1];
+        }
+        if (room.playerOrder.length % 2) {
+            room.team2.members.pop();
+        }
+        console.log("playerOrder ", room.playerOrder);
+        console.log("Team 1 ", room.team1, " and Team 2 ", room.team2);
+        room.currentDescriber = room.playerOrder[room.currentPlayerIndex];
+        emitRoom(room, { type: "gameStarted", team1: room.team1.members, team2: room.team2.members });
+        emitPlayer(room.players[room.currentDescriber], { type: "yourRound" });
+        emitRoom(room, { type: "currentDescriber", currentDescriber: room.currentDescriber });
+    }
+    //8
+    else if (room.gameState.type === "inGame" && data.event === "startRound") {
+        room.celebrities = shuffle(room.celebrities);
+        emitRoom(room, { type: "roundStarted" });
+        emitPlayer(room.players[room.currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
+        roundTimer = setTimeout(function () {
+            emitPlayer(room.players[room.currentDescriber], { type: "endRound" });
+            emitRoom(room, { type: "roundEnded", team1Score: room.team1.score, team2Score: room.team2.score });
+            room.currentPlayerIndex += 1;
+            if (room.currentPlayerIndex === room.playerOrder.length) {
+                room.currentPlayerIndex = 0;
             }
-        }
-        //10
-        else if (gameState.type === "inGame" && data.event === "passCeleb") {
-            //let room = rooms[roomCode];
-            //io.emit('serverEvent', { type: "celebPassed" });
-            emitRoom(room, { type: "celebPassed" });
-            let currentDescriber = Object.keys(room.players)[room.currentPlayerIndex];
-            if (room.celebrities.length === 0) {
-                //room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.celebrities[0].celebName, type: "nextCeleb" });
-                emitPlayer(room.players[currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
-            } else {
-                let passCeleb = room.celebrities.shift();
-                //room.players[currentDescriber].socket.emit('serverEvent', { celeb: room.celebrities[0].celebName, type: "nextCeleb" });
-                emitPlayer(room.players[currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
-                room.celebrities.push(passCeleb);
-            }
-        }
-
-        /*else if (gameState.type === "in-game" && data.event === "endRound") {
-
-        }*/
-        else {
-            console.log("Server: Game State ", gameState, ", Unhandled event ", data.event, " Error");
+            room.currentDescriber = room.playerOrder[room.currentPlayerIndex];
+            emitRoom(room, { type: "currentDescriber", currentDescriber: room.currentDescriber });
+            emitPlayer(room.players[room.currentDescriber], { type: "yourRound" });
+        }, 10000);
+    }
+    //9
+    else if (room.gameState.type === "inGame" && data.event === "requestCeleb") {
+        score(room);
+        emitRoom(room, { type: "celebGuessed", celeb: room.celebrities[0].celebName });
+        room.guessedCelebrities.push(room.celebrities.shift());
+        room.currentDescriber = room.playerOrder[room.currentPlayerIndex];
+        if (room.celebrities.length === 0) {
+            clearInterval(roundTimer);
+            gameState.type = "end";
+            emitRoom(room, { type: "gameEnded" });
+            console.log("Team 1: " + room.team1.score + " and Team 2: " + room.team2.score);
+        } else {
+            emitPlayer(room.players[room.currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
         }
     }
-});
+    //10
+    else if (room.gameState.type === "inGame" && data.event === "passCeleb") {
+        emitRoom(room, { type: "celebPassed" });
+        if (room.celebrities.length === 0) {
+            emitPlayer(room.players[room.currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
+        } else {
+            let passCeleb = room.celebrities.shift();
+            emitPlayer(room.players[room.currentDescriber], { type: "nextCeleb", celeb: room.celebrities[0].celebName });
+            room.celebrities.push(passCeleb);
+        }
+    }
 
-http.listen(8888, function () {
-    console.log('listening on 8888');
-});
+    /*else if (gameState.type === "end" && data.event === "endGame") {
+        gameState.type === "end";
+        emitRoom(room, { type: "gameEnded" });
+    }*/
+
+    else {
+        console.log("Server: Game State ", gameState, ", Unhandled event ", data.event, " Error");
+    }
+}

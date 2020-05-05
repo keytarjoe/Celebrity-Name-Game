@@ -11,6 +11,7 @@ function handleEvent(event) {
     //1
     if (gameState.type === "start" && event.type === "createButtonClicked") {
         let cookie = 1234;
+        gameState.playerName = event.playerName;
         socket.emit('clientEvent',
         {
             playerName: event.playerName, 
@@ -21,6 +22,7 @@ function handleEvent(event) {
     //2
     else if (gameState.type === "start" && event.type === "joinButtonClicked") {
         gameState.roomCode = event.roomCode;
+        gameState.playerName = event.playerName;
         let cookie = 1234;
         socket.emit('clientEvent',
         {
@@ -34,7 +36,7 @@ function handleEvent(event) {
     else if (gameState.type === "start" && event.type === "roomCreated") {
         gameState.type = "inLobby";
         gameState.roomCode = event.roomCode; //Change
-        $("#container").prepend(event.roomCode);
+        $("#room-code-container h3").html("Room Code: " + event.roomCode);
         $("#login-container").hide();
         $("#lobby-container").show();
         $("#start-game-button").css("display", "block");
@@ -43,18 +45,25 @@ function handleEvent(event) {
     //4
     else if (gameState.type === "start" && event.type === "roomJoined") {
         gameState.type = "inLobby";
+        $("#room-code-container h3").html("Room Code: " + gameState.roomCode);
         $("#login-container").hide();
         $("#lobby-container").show();
-        //socket.emit('clientEvent', {event: "lobbyPhase"});
+    }
+    //
+    else if (gameState.type === "inLobby" && event.type === "refreshPLayers") {
+        $("#player-list").empty();
+        for ( i = 0; i < event.players.length; i++) {
+            $("#player-list").append("<li><h3>" + event.players[i] + " is ready!</h3></li>");
+        }
     }
     //5
     else if (gameState.type === "inLobby" && event.type === "celebNameButtonClicked") {
-        $("#first-celeb-name, #second-celeb-name, #celeb-name-button").hide();
+        $("#celeb-container").hide();
         socket.emit('clientEvent',
         {
-            firstCelebName: event.firstCelebName,
-            secondCelebName: event.secondCelebName,
+            celebs: [event.firstCelebName, event.secondCelebName],
             roomCode: gameState.roomCode,
+            playerName: gameState.playerName,
             event: "celebNames"
         });
     }
@@ -65,15 +74,53 @@ function handleEvent(event) {
     //7
     else if (gameState.type === "inLobby" && event.type === "gameStarted") {
         gameState.type = "inGame";
+        gameState.team1 = event.team1;
+        gameState.team2 = event.team2;
+        if (gameState.team1.includes(gameState.playerName)) {
+            gameState.myTeam = 1;
+        } else if (gameState.team2.includes(gameState.playerName)) {
+            gameState.myTeam = 2;
+        }
         $("#lobby-container").css("display", "none");
         $("#game-container").css("display", "block");
+        //$("#team-container").append("Team 1 is " + event.team1 + " and Team 2 is " + event.team2);
+        $("#team-container").css("display", "block");
+        for (i = 0; i < event.team1.length; i++) {
+            $("#team-1").append("<li><h4>" + event.team1[i] + "</h4></li>");
+        }
+        for (i = 0; i < event.team2.length; i++) {
+            $("#team-2").append("<li><h4>" + event.team2[i] + "</h4></li>");
+        }
+        console.log("Team 1 is " + event.team1 + " and Team 2 is " + event.team2);
     }
     //8
+    else if (gameState.type === "inGame" && event.type === "currentDescriber") {
+        gameState.currentDescriber = event.currentDescriber;
+        $("#message").html("<p><h3>You're up " + event.currentDescriber + "!</h3></p>");
+        if (event.currentDescriber === gameState.playerName) {
+            gameState.myTurn = true;
+        } else {
+            gameState.myTurn = false;
+        }
+        console.log(event.currentDescriber + " My turn = " + gameState.myTurn);
+    }
+
+    else if (gameState.type === "inGame" && event.type === "roundStarted") {
+        if (gameState.myTurn === true) {
+            $("#message").html("<p><h2>Describe!</h2></p>");
+        }
+        if (gameState.team1.includes(gameState.currentDescriber) && gameState.team1.includes(gameState.playerName)) {
+            $("#message").html("<p><h2>Guess for Team 1!</h2></p>");
+        } else if (gameState.team2.includes(gameState.currentDescriber) && gameState.team2.includes(gameState.playerName)) {
+            $("#message").html("<p><h2>Guess for Team 2!</h2></p>");
+        } else {
+            $("#message").html("<p><h2>Don't guess! Other team's turn.</h2></p>");
+        }
+        
+    }
+
     else if (gameState.type === "inGame" && event.type === "yourRound") {
-        gameState.myTurn = true;
         $("#my-turn-container").show();
-        /*$("#celeb-name").html("Describe " + event.celeb);
-        console.log("Describe " + event.celeb);*/
     }
     //9
     else if (gameState.type === "inGame" && event.type === "startRoundButtonClicked") {
@@ -83,7 +130,7 @@ function handleEvent(event) {
             console.log("No more time");
         }, 10000);*/
         createTimerBar('timerBar', '10s', function() {
-            $("#message").append("No more time!");
+            $("#message").append("<p>No more time!</p>");
         });
     }
     //10
@@ -114,10 +161,16 @@ function handleEvent(event) {
     else if (gameState.type === "inGame" && event.type === "endRound" && gameState.myTurn){
         gameState.myTurn = false;
         $("#my-turn-container").css("display", "none");
+        $("#message").empty();
+        $("#timerBar").empty();
     }
 
     else if (gameState.type === "inGame" && event.type === "noPass") {
         $("#celeb-name").html("Out of Passes! Describe " + event.celeb);
+    }
+
+    else if (gameState.type === "inGame" && event.type === "roundEnded") {
+        console.log("Team 1: " + event.team1Score + " Team 2: " + event.team2Score);
     }
 
     else if (gameState.type === "inGame" && event.type === "gameEnded") {
