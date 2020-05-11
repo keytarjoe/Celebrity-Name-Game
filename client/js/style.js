@@ -1,4 +1,5 @@
 function createTimerBar(id, duration, callback) {
+   console.log(duration);
    var timerBar = document.getElementById(id);
    timerBar.className = 'timerBar';
 

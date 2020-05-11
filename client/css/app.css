@@ -1,29 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap');
 
-* {
-    margin: 0;
-    padding: 0;
-}
-
-body {
-    font-family: 'Raleway', sans-serif;
-    font-size: 16px;
-    font-weight: 400;
-}
-
 input[type=text] {
     width: 196px;
     height: 46px;
-    border-radius: 15px;
     font-size: 18px;
     text-align: center;
+    border-radius: 15px;
     border-width: 2px;
     border-style: solid;
     border-color: #999;
-}
-
-p {
-    margin: 0 0 10px 0;
+    margin-bottom: 12px;
 }
 
 #header {
@@ -39,7 +25,6 @@ p {
     margin: 0 auto;
     position: relative;
     height: 100%;
-    padding-top: 10px;
     /*background-color: forestgreen;*/
 }
 
@@ -50,9 +35,9 @@ p {
     text-align: center;
 }
 
-/*#room-code-container {
-    text-align: center;
-}*/
+#room-code-container {
+    margin-top: 10px;
+}
 
 #login-container {
     text-align: left;
@@ -68,11 +53,26 @@ p {
     text-align: left;
 }
 
+#celeb-suggestion-list {
+    list-style: none;
+    margin-bottom: 5px;
+}
+
 #room-code-container {
     color: #999;
 }
  
-#game-container, #my-turn-container, #team-container, #end-container {
+#game-container {
+    display: none;
+    width: 196px;
+    border-radius: 15px;
+    border-color: dodgerblue;
+    border-width: 2px;
+    border-style: solid;
+    padding: 10px;
+}
+
+#my-turn-container, #team-container, #end-container {
     display: none;
 }
 
@@ -92,14 +92,27 @@ p {
     width: 100px;
 }
 
-#next-celeb-button, #pass-celeb-button, #start-game-button {
+#next-celeb-button, #pass-celeb-button, #start-round-button {
+    width: 146px;
     display: none;
 }
 
+#start-game-button {
+    display: none;
+}
+
+#celeb-feed-container {
+    display: block;
+}
+
+#celeb-feed {
+    color: #999;
+    list-style: none;
+}
+
 .timerBar {
-    width: 298px;
+    width: 300px;
     margin: 0 auto;
-    border: solid 1px #000;
 }
 
 .timerBar .inner {
@@ -125,10 +138,10 @@ p {
     background-color: dodgerblue;
     border: none;
     border-radius: 15px;
+    border-color: firebrick;
     box-shadow: 0 9px #999;
+    margin-bottom: 12px;
 }
-
-
   
 .button:hover {background-color: #186EC4}
   

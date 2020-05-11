@@ -11,5 +11,8 @@
   "author": "Joseph Benedetti",
   "devDependencies": {
     "eslint": "^6.8.0"
+  },
+  "scripts": {
+    "pretest": "eslint --ignore-path .gitignore ."
   }
 }
