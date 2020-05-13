@@ -150,13 +150,14 @@ io.on('connection', function (socket) {
         else if (gameState.type === "inLobby" && data.event === "startGame") {
             //let room = rooms[data.roomCode];
             clearInterval(session.lobbyInterval);
-            if (session.playerName !== room.vip) {
-                console.log("Cant Start");
+            console.log("StartGame ", session.room);
+            if (session.playerName !== session.room.vip) {
+                console.log("Cant Start", session.playerName);
                 return;
             }
             gameState.type = "inGame";
             session.room.playerOrder = shuffle(Object.keys(session.room.players));
-            for (var i = 0, l = room.playerOrder.length; i < l; i += 2) {
+            for (var i = 0, l = session.room.playerOrder.length; i < l; i += 2) {
                 session.room.team1.members[i / 2] = session.room.playerOrder[i];
                 session.room.team2.members[i / 2] = session.room.playerOrder[i + 1];
             }
