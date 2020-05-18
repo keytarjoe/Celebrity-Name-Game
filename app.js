@@ -1,25 +1,20 @@
 //Websocket Server with Socket.io
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io')(http);
-var bodyParser = require('body-parser');
-
-var session = require("express-session")({
+const express = require('express');
+const app = express();
+const server = require('http').Server(app);
+const io = require('socket.io')(server, { cookie: false });
+const session = require("express-session")({
     secret: "my-secret",
     resave: true,
-    saveUninitialized: true
-  });
-var sharedsession = require("express-socket.io-session");
+    saveUninitialized: true,
+});
+const sharedsession = require("express-socket.io-session");
 
 // Attach session
 app.use(session);
 
 // Share session with io sockets
 io.use(sharedsession(session));
-
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(express.static(__dirname + '/client'));
 
@@ -31,10 +26,6 @@ app.get('/terms', function (req, res) {
 });
 
 var rooms = {};
-var gameState = {
-    type: "start"
-};
-
 var sessions = {};
 
 //Event Listener
@@ -45,15 +36,21 @@ io.on('connection', function (socket) {
         sessions[socket.handshake.session.id] = {
             playerName: null,
             roomCode: null,
-            roundTimer: null,
-            lobbyInterval: null,
             room: null,
+            team: null,
+            playerState: "inApp"
         };
     }
 
-    var session = sessions[socket.handshake.session.id];
+    let player = sessions[socket.handshake.session.id];
 
-    console.log(session);
+    if (player.playerState === "inRoom") {
+        console.log("Session reconnect");
+        handleEvent({ event: "reconnect" });
+    }
+
+    let roundTimer;
+    let lobbyInterval;
     
     socket.on('clientEvent', function (data) {
         handleEvent(data);
@@ -63,28 +60,29 @@ io.on('connection', function (socket) {
         console.log('A user disconnected', socket.handshake.session.id);
     });
 
-    /*socket.on('reconnect', function (data) {
-        socket.join()
-    })*/
-
     function handleEvent(data) {
-        
+        console.log("Handle Event log ", data, player);
         //1
-        if (gameState.type === "start" && data.event === "createRoom") {
-            session.roomCode = generateCode();
-            session.playerName = data.playerName;
+        if (data.event === "createRoom") {
+            player.playerState = "inRoom";
+            player.roomCode = generateCode();
+            player.playerName = data.playerName;
             let roundDuration = data.roundDuration;
             let milliseconds = 1000;
-            let players = {};
-            players[data.playerName] = { playerName: data.playerName, cookie: data.cookie, socketId: socket.id, suggestionsSubmitted: false };
+            let playerObject = {};
+            playerObject[data.playerName] = {
+                playerName: data.playerName,
+                socketId: socket.id,
+                suggestionsSubmitted: false
+            };
             let roomObject = {
-                //gameState: "inLobby",
-                roomCode: session.roomCode,
+                gameState: "inLobby",
+                roomCode: player.roomCode,
                 currentPlayerIndex: 0,
                 vip: data.playerName,
                 numberOfSuggestions: data.numberOfSuggestions,
                 roundDuration: roundDuration * milliseconds,
-                players: players,
+                players: playerObject,
                 celebrities: [],
                 guessedCelebrities: [],
                 playerOrder: [],
@@ -97,24 +95,20 @@ io.on('connection', function (socket) {
                     members: []
                 }
             };
-            rooms[session.roomCode] = roomObject;
-            console.log("createRoom Event - rooms ", rooms[session.roomCode]);
-            //socket.join(session.roomCode);
-            session.room = rooms[session.roomCode];
-            gameState.type = "inLobby";
-            emitPlayer(players[data.playerName], {
+            rooms[player.roomCode] = roomObject;
+            player.room = rooms[player.roomCode];
+            emitPlayer(playerObject[data.playerName], {
                 type: "roomCreated",
-                roomCode: session.roomCode,
-                numberOfSuggestions: session.room.numberOfSuggestions,
-                roundDuration: session.room.roundDuration
+                roomCode: player.roomCode,
+                numberOfSuggestions: player.room.numberOfSuggestions,
+                roundDuration: player.room.roundDuration
             });
-            session.lobbyInterval = setInterval(function() {
-                //emitRoom(session.room, { type: 'refreshPlayers', players: Object.keys(session.room.players) });
-                refreshPlayers(session.room);
+            lobbyInterval = setInterval(function() {
+                refreshPlayers(player.room);
             }, 1000);
         }
         //2
-        else if (gameState.type === "inLobby" && data.event === "joinRoom") {
+        else if (data.event === "joinRoom") {
             if (!(data.roomCode in rooms)) {
                 socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
                 return;
@@ -123,111 +117,141 @@ io.on('connection', function (socket) {
                 socket.emit('serverEvent', { error: "Player Name exists already! slut", type: "error2" });
                 return;
             }
-            //socket.join(data.roomCode);
-            session.room = rooms[data.roomCode];
-            session.playerName = data.playerName;
-            let player = { playerName: data.playerName, cookie: data.cookie, socketId: socket.id, suggestionsSubmitted: false };
-            session.room.players[data.playerName] = player;
-            //socket.emit('serverEvent', { players: Object.keys(rooms[data.roomCode].players), type: "roomJoined" });
-            emitPlayer(session.room.players[data.playerName], {
+            player.playerState = "inRoom";
+            player.room = rooms[data.roomCode];
+            player.playerName = data.playerName;
+            player.roomCode = data.roomCode;
+            let playerObject = {
+                playerName: data.playerName,
+                socketId: socket.id,
+                suggestionsSubmitted: false
+            };
+            player.room.players[data.playerName] = playerObject;
+            emitPlayer(player.room.players[data.playerName], {
                 type: "roomJoined",
-                numberOfSuggestions: session.room.numberOfSuggestions,
-                roundDuration: session.room.roundDuration
+                numberOfSuggestions: player.room.numberOfSuggestions,
+                roundDuration: player.room.roundDuration
             });
+            console.log("Join Room log ", player);
         }
         //5
-        else if (gameState.type === "inLobby" && data.event === "celebNames") {
+        else if (player.room.gameState === "inLobby" && data.event === "celebNames") {
             if (!(data.roomCode in rooms)) {
                 socket.emit('serverEvent', { error: "Room does not exist! bitch", type: "error2" });
                 return;
             }
             for ( i = 0; i < data.celebs.length; i++) {
-                rooms[data.roomCode].celebrities.push({ playerName: session.playerName, celebName: data.celebs[i] });
+                rooms[data.roomCode].celebrities.push({
+                    playerName: player.playerName,
+                    celebName: data.celebs[i]
+                });
             }
-            rooms[data.roomCode].players[session.playerName].suggestionsSubmitted = true;
+            rooms[data.roomCode].players[player.playerName].suggestionsSubmitted = true;
         }
         //6 & 7
-        else if (gameState.type === "inLobby" && data.event === "startGame") {
-            //let room = rooms[data.roomCode];
-            clearInterval(session.lobbyInterval);
-            console.log("StartGame ", session.room);
-            if (session.playerName !== session.room.vip) {
-                console.log("Cant Start", session.playerName);
+        else if (player.room.gameState === "inLobby" && data.event === "startGame") {
+            clearInterval(lobbyInterval);
+            if (player.playerName !== player.room.vip) {
+                console.log("Cant Start", player.playerName);
                 return;
             }
-            gameState.type = "inGame";
-            session.room.playerOrder = shuffle(Object.keys(session.room.players));
-            for (var i = 0, l = session.room.playerOrder.length; i < l; i += 2) {
-                session.room.team1.members[i / 2] = session.room.playerOrder[i];
-                session.room.team2.members[i / 2] = session.room.playerOrder[i + 1];
+            player.room.gameState = "inGame";
+            player.room.playerOrder = shuffle(Object.keys(player.room.players));
+            for (var i = 0, l = player.room.playerOrder.length; i < l; i += 2) {
+                player.room.team1.members[i / 2] = player.room.playerOrder[i];
+                player.room.team2.members[i / 2] = player.room.playerOrder[i + 1];
             }
-            if (session.room.playerOrder.length % 2) {
-                session.room.team2.members.pop();
+            if (player.room.playerOrder.length % 2) {
+                player.room.team2.members.pop();
             }
-            session.room.currentDescriber = session.room.playerOrder[session.room.currentPlayerIndex];
-            emitRoom(session.room, { type: "gameStarted", team1: session.room.team1.members, team2: session.room.team2.members });
-            emitPlayer(session.room.players[session.room.currentDescriber], { type: "yourRound" });
-            emitRoom(session.room, { type: "currentDescriber", currentDescriber: session.room.currentDescriber });
+            if (player.room.team1.members.includes(player.playerName)) {
+                player.team = 1;
+            } else if (player.room.team2.members.includes(player.playerName)) {
+                player.team = 2;
+            }
+            player.room.currentDescriber = player.room.playerOrder[player.room.currentPlayerIndex];
+            emitRoom(player.room, {
+                type: "gameStarted",
+                team1: player.room.team1.members,
+                team2: player.room.team2.members
+            });
+            emitPlayer(player.room.players[player.room.currentDescriber], { type: "yourRound" });
+            emitRoom(player.room, {
+                type: "currentDescriber",
+                currentDescriber: player.room.currentDescriber
+            });
+            console.log("Room log ", rooms[player.roomCode]);
         }
         //8
-        else if (gameState.type === "inGame" && data.event === "startRound") {
-            session.room.celebrities = shuffle(session.room.celebrities);
-            emitRoom(session.room, { type: "roundStarted" });
-            emitPlayer(session.room.players[session.room.currentDescriber], { type: "nextCeleb", celeb: session.room.celebrities[0].celebName });
-            session.roundTimer = setTimeout(function () {
-                emitPlayer(session.room.players[session.room.currentDescriber], { type: "endRound" });
-                //emitRoom(session.room, { type: "roundEnded", team1Score: session.room.team1.score, team2Score: session.room.team2.score });
-                session.room.currentPlayerIndex += 1;
-                if (session.room.currentPlayerIndex === session.room.playerOrder.length) {
-                    session.room.currentPlayerIndex = 0;
+        else if (player.room.gameState === "inGame" && data.event === "startRound") {
+            player.room.celebrities = shuffle(player.room.celebrities);
+            emitRoom(player.room, { type: "roundStarted" });
+            emitPlayer(player.room.players[player.room.currentDescriber], { type: "nextCeleb", celeb: player.room.celebrities[0].celebName });
+            roundTimer = setTimeout(function () {
+                emitPlayer(player.room.players[player.room.currentDescriber], { type: "endRound" });
+                player.room.currentPlayerIndex += 1;
+                if (player.room.currentPlayerIndex === player.room.playerOrder.length) {
+                    player.room.currentPlayerIndex = 0;
                 }
-                session.room.currentDescriber = session.room.playerOrder[session.room.currentPlayerIndex];
-                emitRoom(session.room, { type: "currentDescriber", currentDescriber: session.room.currentDescriber });
-                emitPlayer(session.room.players[session.room.currentDescriber], { type: "yourRound" });
-            }, session.room.roundDuration);
+                player.room.currentDescriber = player.room.playerOrder[player.room.currentPlayerIndex];
+                emitRoom(player.room, { type: "currentDescriber", currentDescriber: player.room.currentDescriber });
+                emitPlayer(player.room.players[player.room.currentDescriber], { type: "yourRound" });
+            }, player.room.roundDuration);
         }
         //9
-        else if (gameState.type === "inGame" && data.event === "requestCeleb") {
-            score(session.room);
-            emitRoom(session.room, { type: "celebGuessed", celeb: session.room.celebrities[0].celebName });
-            session.room.guessedCelebrities.push(session.room.celebrities.shift());
-            session.room.currentDescriber = session.room.playerOrder[session.room.currentPlayerIndex];
-            if (session.room.celebrities.length === 0) {
-                clearInterval(session.roundTimer);
-                gameState.type = "end";
-                emitRoom(session.room, { type: "gameEnded", celebrities: session.room.guessedCelebrities });
+        else if (player.room.gameState === "inGame" && data.event === "requestCeleb") {
+            score(player.room);
+            emitRoom(player.room, { type: "celebGuessed", celeb: player.room.celebrities[0].celebName });
+            player.room.guessedCelebrities.push(player.room.celebrities.shift());
+            player.room.currentDescriber = player.room.playerOrder[player.room.currentPlayerIndex];
+            if (player.room.celebrities.length === 0) {
+                clearInterval(player.roundTimer);
+                player.room.gameState = "end";
+                emitRoom(player.room, { type: "gameEnded", celebrities: player.room.guessedCelebrities });
             } else {
-                emitPlayer(session.room.players[session.room.currentDescriber], { type: "nextCeleb", celeb: session.room.celebrities[0].celebName });
+                emitPlayer(player.room.players[player.room.currentDescriber], { type: "nextCeleb", celeb: player.room.celebrities[0].celebName });
             }
         }
         //10
-        else if (gameState.type === "inGame" && data.event === "passCeleb") {
-            emitRoom(session.room, { type: "celebPassed" });
-            if (session.room.celebrities.length === 0) {
-                emitPlayer(session.room.players[session.room.currentDescriber], { type: "nextCeleb", celeb: session.room.celebrities[0].celebName });
+        else if (player.room.gameState === "inGame" && data.event === "passCeleb") {
+            emitRoom(player.room, { type: "celebPassed" });
+            if (player.room.celebrities.length === 0) {
+                emitPlayer(player.room.players[player.room.currentDescriber], { type: "nextCeleb", celeb: player.room.celebrities[0].celebName });
             } else {
-                let passCeleb = session.room.celebrities.shift();
-                emitPlayer(session.room.players[session.room.currentDescriber], { type: "nextCeleb", celeb: session.room.celebrities[0].celebName });
-                session.room.celebrities.push(passCeleb);
+                let passCeleb = player.room.celebrities.shift();
+                emitPlayer(player.room.players[player.room.currentDescriber], { type: "nextCeleb", celeb: player.room.celebrities[0].celebName });
+                player.room.celebrities.push(passCeleb);
             }
         }
-    
-        /*else if (gameState.type === "end" && data.event === "endGame") {
-            gameState.type === "end";
-            emitRoom(session.room, { type: "gameEnded" });
-        }*/
+
+        else if (data.event === "reconnect") {
+            player.room.players[player.playerName].socketId = socket.id;
+            emitPlayer(player.room.players[player.playerName], {
+                type: "reconnect",
+                reconnectData: {
+                    type: player.room.gameState,
+                    numberOfSuggestions: player.room.numberOfSuggestions,
+                    roundDuration: player.room.roundDuration,
+                    playerName: player.playerName,
+                    roomCode: player.roomCode,
+                    myTeam: player.team,
+                    currentDescriber: player.room.currentDescriber,
+                    team1: player.room.team1.members,
+                    team2: player.room.team2.members,
+                    vip: player.room.vip
+                }
+            });
+        }
     
         else {
             console.log("Server: Game State ", gameState, ", Unhandled event ", data.event, " Error");
         }
     }
-
 });
 
-http.listen(8888, function () {
+server.listen(8888, function () {
     console.log('listening on 8888');
 });
-//var gameState = {type: "start"};
 
 //Functions
 
@@ -268,10 +292,10 @@ function shuffle(array) {
 function score(room) {
     if (room.team1.members.includes(room.currentDescriber)) {
         room.team1.score += 1;
-        emitRoom(room, { type: "scoreUpdate", team: "team1", team1Score: room.team1.score });
+        emitRoom(room, { type: "scoreUpdate", team: "team1", teamScore: room.team1.score });
     } else if (room.team2.members.includes(room.currentDescriber)) {
         room.team2.score += 1;
-        emitRoom(room, { type: "scoreUpdate", team: "team2", team2Score: room.team2.score });
+        emitRoom(room, { type: "scoreUpdate", team: "team2", teamScore: room.team2.score });
     }
 };
 

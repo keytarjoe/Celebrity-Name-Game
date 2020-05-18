@@ -16,4 +16,3 @@ function createTimerBar(id, duration, callback) {
 
    timerBarInner.style.animationPlayState = 'running';
 }
-
