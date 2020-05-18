@@ -2,7 +2,7 @@ var socket = io();
 var gameState = {
     type: "start"
 };
- 
+
 
 //Event Handler
 
@@ -15,6 +15,7 @@ function handleEvent(event) {
         socket.emit('clientEvent',
         {
             playerName: event.playerName,
+            cookie: cookie,
             roundDuration: event.roundDuration,
             numberOfSuggestions: event.numberOfSuggestions,
             event: "createRoom"
@@ -171,17 +172,18 @@ function handleEvent(event) {
     else {
         console.log("Client: Game State ", gameState, " Unhandled event", event, "Error");
     };
-    
+
 };
 
 //Button Clicks
 
-$("#create-room-button").click(function () {
-    var playerName = $("#player-name").val();
-    var numberOfSuggestions = $("#number-of-suggestions").val();
-    var roundDuration = $("#round-duration").val();
+$("#createRoomButton").click(function () {
+    var playerName = $("#playerName").val();
+    var numberOfSuggestions = $("#numberOfSuggestions").val();
+    var roundDuration = $("#roundDuration").val();
     if (playerName === "" ) {
         console.log("HEY YOUR NAME IDIOTLASK Hfujkgh ku");
+        window.alert("What's your name, dumbass?");
         return;
     }
     if (!numberOfSuggestions) {
@@ -198,13 +200,21 @@ $("#create-room-button").click(function () {
     });
 });
 
-$("#join-room-button").click(function () {
-    let playerName = $("#player-name").val();
-    let roomCode = $("#join-room").val().toUpperCase();
+$("#joinRoomButton").click(function () {
+    let playerName = $("#playerName").val();
+    let roomCode = $("#joinRoom").val().toUpperCase();
     if (playerName === "" || roomCode === "") {
         console.log("HEY IDIOTLASK Hfujkgh ku");
+        if (playerName === "" && roomCode === ""){
+          window.alert("Don't be stupid, dumbass.")
+        } else if(playerName === "" && roomCode !== "") {
+          window.alert("Enter your name, dumbass.")
+        } else if (roomCode === "" && playerName !== "") {
+          window.alert("Enter the room code, dumbass.")
+        }
+
         return;
-    } 
+    }
     handleEvent({
         type: "joinButtonClicked",
         playerName: playerName,
@@ -212,30 +222,30 @@ $("#join-room-button").click(function () {
     });
 });
 
-$("#celeb-suggestion-button").click(function () {
+$("#celebSuggestionButton").click(function () {
     let celebArray = [];
     let celebNumber = 1;
     for (i = 0; i < gameState.numberOfSuggestions; i++) {
-        celebArray[i] = $("#celeb-suggestion-" + celebNumber).val();
+        celebArray[i] = $("#celebSuggestion-" + celebNumber).val();
         celebNumber += 1;
     }
     handleEvent({ type: "celebNameButtonClicked", celebs: celebArray });
-    
+
 });
 
-$("#start-game-button").click(function () {
+$("#startGameButton").click(function () {
     handleEvent({ type: "startGameButtonClicked" });
 });
 
-$("#start-round-button").click(function () {
+$("#startRoundButton").click(function () {
     handleEvent({ type: "startRoundButtonClicked" });
 });
 
-$("#next-celeb-button").click(function () {
+$("#nextCelebButton").click(function () {
     handleEvent({ type: "nextCelebButtonClicked" });
 });
 
-$("#pass-celeb-button").click(function () {
+$("#passCelebButton").click(function () {
     handleEvent({ type: "passCelebButtonClicked" });
 });
 

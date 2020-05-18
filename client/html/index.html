@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Celebrity Name Game</title>
     <link rel="stylesheet" type="text/css" media="screen" href="/css/reset.css">
-    <link rel="stylesheet" type="text/css" media="screen" href="/css/app.css">
+    <link rel="stylesheet" type="text/css" media="screen" href="/css/styles.css">
     <script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
     <script src = "/socket.io/socket.io.js"></script>
     <script
@@ -19,57 +19,72 @@
         <h1>Celebrity Guessing Game</h1>
     </div>
 
-    <div id="timer-container">
+    <div id="timerContainer">
         <div id="timerBar"></div>
     </div>
-    
+
     <div id="container">
 
-        <div id="room-code-container" class="container"><h3></h3></div>
+        <div id="roomCodeContainer" class="container"><h3></h3></div>
 
-        <div id="login-container" class="container">
-            <h2>Name</h2>
-            <input type="text" placeholder="Enter Name Here!" id="player-name" class="login-info" />
-            <h2>Room Code</h2>
-            <input type="text" placeholder="Enter Code Here!" maxlength="5" id="join-room" class="login-info" />
-            <button id="join-room-button" class="button">Join a Room!</button>
-            <h2>Create Room</h2>
-            <div id="game-options-container">
-                <h3>Number of Celebrity Suggestions</h3>
-                <input type="text" placeholder="Ex: 4" id="number-of-suggestions" class="game-option" />
-                <h3>Round Duration<br />(in seconds)</h3>
-                <input type="text" placeholder="Ex: 30" id="round-duration" class="game-option" />
+        <div id="loginContainer" class="container">
+          <h1>You</h1>
+          <div id="joinGame">
+            <div id="You">
+              <div class="section">
+                <h2>Name</h2>
+                <input type="text" placeholder="Enter Name Here!" id="playerName" class="login-info" />
+              </div>
+              <div class="section">
+                <h2>Room Code</h2>
+                <input type="text" placeholder="Enter Code Here!" maxlength="5" id="joinRoom" class="loginInfo" />
+              </div>
             </div>
-            <button id="create-room-button" class="button">Create a Room!</button>
+            <button id="joinRoomButton" class="button btn">Join a Room!</button>
+          </div>
+          <h1>Create Room</h1>
+          <div id="createGame">
+            <div id="Game">
+              <div class="section">
+                <h2>Number of Celebrity Suggestions</h2>
+                <input type="text" placeholder="Ex: 4" id="numberOfSuggestions" class="game-option" />
+              </div>
+              <div class="section">
+                <h2>Round Duration (in seconds)</h2>
+                <input type="text" placeholder="Ex: 30" id="roundDuration" class="game-option" />
+              </div>
+            </div>
+            <button id="createRoomButton" class="button btn">Create a Room!</button>
+          </div>
         </div>
 
         <!--<div id="create-container">
             Round Duration (in seconds)<input ty>
         </div>-->
-        
-        <div id="lobby-container" class="container">
-            <div id="celeb-container">
-                <ul id="celeb-suggestion-list"></ul>
-                <button id="celeb-suggestion-button" class="button">Go!</button>
+
+        <div id="lobbyContainer" class="container">
+            <div id="celebContainer">
+                <ul id="celebSuggestionList"></ul>
+                <button id="celebSuggestionButton" class="button btn">Go!</button>
             </div>
-            <button id="start-game-button" class="button">VIP Start Game!</button>
-            <div id="player-container" class="container">
+            <button id="startGameButton" class="button">VIP Start Game!</button>
+            <div id="playerContainer" class="container">
                 <h4>Waiting for the Other Players...</h4>
-                <ul id="player-list"></ul>
+                <ul id="playerList"></ul>
             </div>
         </div>
 
-        <div id="game-container" class="container">
+        <div id="gameContainer" class="container">
             <div id="message"></div>
-            <div id="my-turn-container" class="container">
-                <button id="start-round-button" class="button">Start Round!</button>
-                <h2><span id="celeb-name"></span></h2>
-                <button id="next-celeb-button" class="button">Next!</button>
-                <button id="pass-celeb-button" class="button">Pass! (1)</button>
+            <div id="myTurnContainer" class="container">
+                <button id="startRoundButton" class="button">Start Round!</button>
+                <h2><span id="celebName"></span></h2>
+                <button id="nextCelebButton" class="button btn">Next!</button>
+                <button id="passCelebButton" class="button btn">Pass! (1)</button>
             </div>
         </div>
-        
-        <div id="team-container" class="container">
+
+        <div id="teamContainer" class="container">
             <h2><span id="team-1-score">0</span> | <span id="team-2-score">0</span></h2>
             <ul id="team-1">
                 <li><h3>Team 1</h3></li>
@@ -79,13 +94,13 @@
             </ul>
         </div>
 
-        <div id="celeb-feed-container" class="container">
-            <ul id="celeb-feed"></ul>
+        <div id="celebFeedContainer" class="container">
+            <ul id="celebFeed"></ul>
         </div>
 
-        <div id="end-container" class="container">
+        <div id="endContainer" class="container">
             <h2>Game Over!</h2>
-            <ul id="celeb-end-list"></ul>
+            <ul id="celebEndList"></ul>
         </div>
     </div>
 <script type="text/javascript" src="/js/client.js"></script>
@@ -93,4 +108,3 @@
 <script type="text/javascript" src="/js/render.js"></script>
 </body>
 </html>
-

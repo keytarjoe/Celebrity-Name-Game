@@ -1,30 +1,28 @@
 function render(event, data) {
     //1
     if (event === "renderLobby") {
-        $("#room-code-container h3").html("Room Code: " + gameState.roomCode);
-        $("#login-container").css("display", "none");
-        $("#lobby-container").css("display", "block");
+        $("#roomCodeContainer h3").html("Room Code: " + event.roomCode);
+        $("#loginContainer").css("display", "none");
+        $("#lobbyContainer").css("display", "flex");
+        $("#startGameButton").css("display", "block");
         let celebNumber = 1;
-        for (i = 0; i < gameState.numberOfSuggestions; i++) {
+        for (i = 0; i < event.numberOfSuggestions; i++) {
             $("#celeb-suggestion-list").append(
                 '<li><h2>Celebrity ' + celebNumber + '</h2></li>' +
-                '<li><input type="text" placeholder="Celeb Here!" id="celeb-suggestion-' + celebNumber +
+                '<li><input type="text" placeholder="First Celeb Here!" id="celeb-suggestion-' + celebNumber +
                 '" class="celeb-suggestion" /></li>'
             )
             celebNumber += 1;
         }
-        if (gameState.vip) {
-            $("#start-game-button").css("display", "block");
-        }
     }
     //2
     else if (event === "renderPlayers") {
-        $("#player-list").empty();
+        $("#playerList").empty();
         for ( i = 0; i < data.refreshList.length; i++) {
             if (data.refreshList[i].submitted) {
-                $("#player-list").append("<li><h3>" + data.refreshList[i].playerName + " is ready!</h3></li>");
+                $("#playerList").append("<li><h3>" + data.refreshList[i].playerName + " is ready!</h3></li>");
             } else {
-                $("#player-list").append("<li><h3>" + data.refreshList[i].playerName + " is submitting...</h3></li>");
+                $("#playerList").append("<li><h3>" + data.refreshList[i].playerName + " is submitting...</h3></li>");
             }
         }
     }
@@ -34,16 +32,17 @@ function render(event, data) {
     }
     //4
     else if (event === "renderGame") {
-        $("#login-container").css("display", "none");
-        $("#lobby-container").css("display", "none");
-        $("#game-container").css("display", "block");
-        $("#team-container").css("display", "block");
-        for (i = 0; i < gameState.team1.length; i++) {
-            $("#team-1").append("<li><h4>" + gameState.team1[i] + "</h4></li>");
+        $("#lobbyContainer").css("display", "none");
+        $("#gameContainer").css("display", "flex");
+        //$("#team-container").append("Team 1 is " + event.team1 + " and Team 2 is " + event.team2);
+        $("#teamContainer").css("display", "block");
+        for (i = 0; i < event.team1.length; i++) {
+            $("#team-1").append("<li><h4>" + event.team1[i] + "</h4></li>");
         }
-        for (i = 0; i < gameState.team2.length; i++) {
-            $("#team-2").append("<li><h4>" + gameState.team2[i] + "</h4></li>");
+        for (i = 0; i < event.team2.length; i++) {
+            $("#team-2").append("<li><h4>" + event.team2[i] + "</h4></li>");
         }
+        console.log("Team 1 is " + event.team1 + " and Team 2 is " + event.team2);
     }
     //5
     else if (event === "renderMessage" && data.type === "currentDescriber") {
@@ -63,13 +62,13 @@ function render(event, data) {
     }
     //7
     else if (event === "renderRound" && data.type === "alert") {
-        $("#my-turn-container").show();
-        $("#start-round-button").show();
+        $("#myTurnContainer").show();
+        $("#startRoundButton").show();
     }
     //8
     else if (event === "renderRound" && data.type === "controls") {
-        $("#start-round-button").hide();
-        $("#next-celeb-button, #pass-celeb-button").show();
+        $("#startRoundButton").hide();
+        $("#nextCelebButton, #pass-celeb-button").show();
         duration = gameState.roundDuration / 1000;
         duration = duration.toString().concat("s");
         createTimerBar('timerBar', duration, function() {
@@ -78,11 +77,11 @@ function render(event, data) {
     }
     //9
     else if (event === "renderRound" && data.type === "clear") {
-        $("#my-turn-container").css("display", "none");
-        $("#next-celeb-button, #pass-celeb-button").hide();
+        $("#myTurnContainer").css("display", "none");
+        $("#nextCelebButton, #passCelebButton").hide();
         $("#message").empty();
         $("#timerBar").empty();
-        $("#celeb-name").empty();
+        $("#celebName").empty();
     }
     //10
     else if (event === "renderCelebName") {
@@ -91,12 +90,12 @@ function render(event, data) {
 
     //11
     else if (event === "updateCelebFeed" && data.type === "guessed") {
-        $("#celeb-feed").prepend("<h4>" + data.celeb + " guessed!</h4>");
+        $("#celebFeed").prepend("<h4>" + event.celeb + " guessed!</h4>");
     }
     //12
     else if (event === "updateCelebFeed" && data.type === "passed") {
-        $("#pass-celeb-button").hide();
-        $("#celeb-feed").prepend("<h4>Celebrity passed!</h4>");
+      $("#passCelebButton").hide();
+      $("#celebFeed").prepend("<h4>Celebrity passed!</h4>");
     }
     //13
     else if (event === "updateScore") {
@@ -108,18 +107,18 @@ function render(event, data) {
     }
     //14
     else if (event === "renderEndGame") {
-        $("#celeb-feed-container").css("display", "none");
-        $("#game-container").css("display", "none");
-        $("#end-container").css("display", "block");
-        for ( i = 0; i < data.celebrities.length; i++) {
-            $("#celeb-end-list").append(
-                "<li><h4>" + data.celebrities[i].celebName +
-                " - " + data.celebrities[i].playerName +
+        $("#celebFeedContainer").css("display", "none");
+        $("#gameContainer").css("display", "none");
+        $("#endContainer").css("display", "block");
+        for ( i = 0; i < event.celebrities.length; i++) {
+            $("#celebEndList").append(
+                "<li><h4>" + event.celebrities[i].celebName +
+                " - " + event.celebrities[i].playerName +
                 "</h4></li>"
             );
         }
     }
-    
+
     else {
         console.log("Unhandled Event " + event + " and Unhandled Type " + data.type);
     }
