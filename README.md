@@ -3,5 +3,7 @@
 
 ## To-Do
  - Responsive GUI
- - Cookie Integration
  - Fix player queue for uneven teams
+
+## Done
+ - Cookie Integration
