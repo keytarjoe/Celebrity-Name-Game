@@ -1,8 +1,10 @@
 @import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap");
 body {
-  background-image: linear-gradient(to bottom right, white, #ff4d4d); }
+  background-image: linear-gradient(to bottom right, white, #ff4d4d);
+  background-repeat: no-repeat;
+  height: 100%; }
 
-input[type=text] {
+input[type="text"] {
   width: 196px;
   height: 46px;
   font-size: 18px;
@@ -20,38 +22,56 @@ input[type=text] {
   line-height: 50px;
   background-color: dodgerblue; }
 
+#roomCodeContainer {
+  margin-top: 10px;
+  color: #999; }
+  #roomCodeContainer h3 {
+    margin: 5px; }
+
 #loginContainer {
-  width: 75%;
-  margin: 0 auto;
-  text-align: center;
   display: flex;
   justify-content: center;
   flex-direction: column;
-  align-content: center; }
+  align-content: center;
+  width: 75%;
+  min-width: 200px;
+  margin: 0 auto;
+  text-align: center; }
   #loginContainer #joinGame {
     margin-bottom: 50px; }
     #loginContainer #joinGame #You {
-      width: 100%;
       display: flex;
       justify-content: center;
-      align-content: flex-end;
+      flex-direction: row;
+      align-content: center;
+      width: 100%;
+      min-width: 200px;
       min-height: 100px; }
   #loginContainer #createGame {
     margin-bottom: 50px; }
     #loginContainer #createGame #Game {
-      width: 100%;
       display: flex;
       justify-content: center;
-      align-content: flex-end;
+      flex-direction: row;
+      align-content: center;
+      width: 100%;
+      min-width: 200px;
       min-height: 100px; }
   #loginContainer .section {
     width: 45%;
+    min-width: 200px;
     margin: 0 auto;
     text-align: center; }
   @media (max-width: 700px) {
-    #loginContainer #You, #loginContainer #Game {
+    #loginContainer div#joinGame div#You,
+    #loginContainer div#joinGame div#Game,
+    #loginContainer div#createGame div#You,
+    #loginContainer div#createGame div#Game {
       flex-direction: column; }
-      #loginContainer #You .section, #loginContainer #Game .section {
+      #loginContainer div#joinGame div#You .section,
+      #loginContainer div#joinGame div#Game .section,
+      #loginContainer div#createGame div#You .section,
+      #loginContainer div#createGame div#Game .section {
         width: 100%;
         margin-bottom: 15px; } }
 
@@ -60,29 +80,71 @@ input[type=text] {
   justify-content: center;
   flex-direction: column;
   align-content: center; }
-  #lobbyContainer #celeb-suggestion-list {
+  #lobbyContainer #celebSuggestionList {
     list-style: none;
     margin-bottom: 5px; }
-  #lobbyContainer #playerContainer h4 {
-    color: #999; }
-  #lobbyContainer #playerContainer #player-list {
-    list-style: none; }
+  #lobbyContainer #celebContainer {
+    width: 45%;
+    min-width: 200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-content: center; }
+  #lobbyContainer #playerContainer {
+    width: 45%;
+    min-width: 200px;
+    margin: 0 auto;
+    text-align: center; }
+    #lobbyContainer #playerContainer h4 {
+      color: #999; }
+    #lobbyContainer #playerContainer #player-list {
+      list-style: none; }
 
 #gameContainer {
   display: none;
   justify-content: center;
   flex-direction: column;
   align-content: center;
-  width: 196px;
+  width: 45%;
+  min-width: 200px;
+  margin: 10px auto;
   border-radius: 15px;
   border-color: dodgerblue;
   border-width: 2px;
   border-style: solid;
   padding: 10px; }
+  #gameContainer #message {
+    text-align: center;
+    margin-bottom: 15px; }
+  #gameContainer #myTurnContainer {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-content: center; }
+    #gameContainer #myTurnContainer .categoryWrapper {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      text-align: center; }
 
 #teamContainer {
-  width: 200px;
-  display: none; }
+  width: 45%;
+  margin: 0 auto;
+  min-width: 200px;
+  display: none;
+  justify-content: center;
+  flex-direction: row;
+  align-content: center; }
+  #teamContainer .categoryWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: center; }
+  #teamContainer #theTeams {
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+    align-content: center; }
   #teamContainer ul {
     list-style: none;
     color: #999;
@@ -90,12 +152,48 @@ input[type=text] {
     float: left;
     width: 100px; }
 
-#my-turn-container, #endContainer {
-  display: none; }
+#celebFeedContainer {
+  display: none;
+  justify-content: center;
+  flex-direction: row;
+  align-content: center; }
+  #celebFeedContainer #celebFeed {
+    color: #999;
+    list-style: none;
+    text-align: center; }
 
-/*#player-container {
-    text-align: center;
-}*/
+#myTurnContainer,
+#endContainer {
+  display: none;
+  margin-bottom: 20px; }
+  #myTurnContainer .hr,
+  #endContainer .hr {
+    width: 60%;
+    margin: 20px auto; }
+  #myTurnContainer .categoryWrapper,
+  #endContainer .categoryWrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: center; }
+
+#startGameButton {
+  display: none;
+  width: 50%;
+  height: 50px;
+  font-size: 20px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: dodgerblue;
+  border: none;
+  border-radius: 15px;
+  border-color: firebrick;
+  box-shadow: 0 9px #999;
+  margin: 0 auto 20px auto; }
+
 .btn {
   display: inline-block;
   width: 50%;
@@ -111,38 +209,15 @@ input[type=text] {
   border-radius: 15px;
   border-color: firebrick;
   box-shadow: 0 9px #999;
-  margin-bottom: 12px; }
+  margin: 0 auto 20px auto; }
 
 .button:hover {
-  background-color: #186EC4; }
+  background-color: #186ec4; }
 
 .button:active {
-  background-color: #186EC4;
+  background-color: #186ec4;
   box-shadow: 0 5px #666;
   transform: translateY(4px); }
-
-#start-game-button {
-  display: none;
-  width: 50%;
-  height: 50px;
-  font-size: 20px;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  outline: none;
-  color: #fff;
-  background-color: dodgerblue;
-  border: none;
-  border-radius: 15px;
-  border-color: firebrick;
-  box-shadow: 0 9px #999;
-  margin-bottom: 12px; }
-
-#celeb-feed-container {
-  display: block; }
-  #celeb-feed-container #celeb-feed {
-    color: #999;
-    list-style: none; }
 
 #timerContainer #timerBar {
   width: 300px;
@@ -175,3 +250,5 @@ input[type=text] {
 @media screen and (max-width: 825px) {
 
 }*/
+
+/*# sourceMappingURL=styles.css.map */

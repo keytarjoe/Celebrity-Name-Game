@@ -1,149 +1,202 @@
 // Mixins for CatchPhrase game
 
 @mixin login() {
-  width: 75%;
-  margin: 0 auto;
-  text-align: center;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-  align-content: center;
+	@include flex(flex, column);
+	width: 75%;
+	min-width: 200px;
+	margin: 0 auto;
+	text-align: center;
 
-  #joinGame {
-    margin-bottom: 50px;
+	#joinGame {
+		margin-bottom: 50px;
 
-    #You {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-content: flex-end;
-      min-height: 100px;
-    }
-  }
+		#You {
+			@include flex(flex, row);
+			width: 100%;
+			min-width: 200px;
+			min-height: 100px;
+		}
+	}
 
-  #createGame {
-    margin-bottom: 50px;
+	#createGame {
+		margin-bottom: 50px;
 
-    #Game {
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      align-content: flex-end;
-      min-height: 100px;
-    }
-  }
+		#Game {
+			@include flex(flex, row);
+			width: 100%;
+			min-width: 200px;
+			min-height: 100px;
+		}
+	}
 
-  .section {
-    width: 45%;
-    margin: 0 auto;
-    text-align: center;
-  }
+	.section {
+		width: 45%;
+		min-width: 200px;
+		margin: 0 auto;
+		text-align: center;
+	}
 
-  @media (max-width: 700px) {
-    #You, #Game {
-      flex-direction: column;
+	@media (max-width: 700px) {
+		div#joinGame,
+		div#createGame {
+			div#You,
+			div#Game {
+				flex-direction: column;
 
-      .section {
-        width: 100%;
-        margin-bottom: 15px;
-      }
-    }
-  }
+				.section {
+					width: 100%;
+					margin-bottom: 15px;
+				}
+			}
+		}
+	}
 }
 
 @mixin lobby($display) {
-  display: $display;
-  justify-content: center;
-  flex-direction: column;
-  align-content: center;
+	@include flex($display, column);
 
-  #celeb-suggestion-list {
-      list-style: none;
-      margin-bottom: 5px;
-  }
+	#celebSuggestionList {
+		list-style: none;
+		margin-bottom: 5px;
+	}
 
-  #playerContainer {
-    h4 {
-      color: #999;
-    }
+	#celebContainer {
+		width: 45%;
+		min-width: 200px;
+		margin: 0 auto;
+		display: flex;
+		justify-content: center;
+		align-content: center;
+	}
 
-    #player-list {
-        list-style: none;
-    }
-  }
+	#playerContainer {
+		width: 45%;
+		min-width: 200px;
+		margin: 0 auto;
+		text-align: center;
+
+		h4 {
+			color: #999;
+		}
+
+		#player-list {
+			list-style: none;
+		}
+	}
 }
 
 @mixin game($display) {
-  display: $display;
-  justify-content: center;
-  flex-direction: column;
-  align-content: center;
-  width: 196px;
-  border-radius: 15px;
-  border-color: dodgerblue;
-  border-width: 2px;
-  border-style: solid;
-  padding: 10px;
+	@include flex($display, column);
+	width: 45%;
+	min-width: 200px;
+	margin: 10px auto;
+	border-radius: 15px;
+	border-color: dodgerblue;
+	border-width: 2px;
+	border-style: solid;
+	padding: 10px;
+
+	#message {
+		text-align: center;
+		margin-bottom: 15px;
+	}
+
+	#myTurnContainer {
+		@include flex(flex, row);
+
+		@include categoryWrapper();
+	}
 }
 
-@mixin team() {
-  width: 200px;
-  display: none;
+@mixin team($display) {
+	width: 45%;
+	margin: 0 auto;
+	min-width: 200px;
+	@include flex($display, row);
 
-  ul {
-      list-style: none;
-      color: #999;
-      text-align: center;
-      float: left;
-      width: 100px;
-  }
+	@include categoryWrapper();
+
+	#theTeams {
+		@include flex(flex, row);
+	}
+
+	ul {
+		list-style: none;
+		color: #999;
+		text-align: center;
+		float: left;
+		width: 100px;
+	}
 }
 
 @mixin button($display) {
-  display: $display;
-  width: 50%;
-  height: 50px;
-  font-size: 20px;
-  cursor: pointer;
-  text-align: center;
-  text-decoration: none;
-  outline: none;
-  color: #fff;
-  background-color: dodgerblue;
-  border: none;
-  border-radius: 15px;
-  border-color: firebrick;
-  box-shadow: 0 9px #999;
-  margin-bottom: 12px;
+	display: $display;
+	width: 50%;
+	height: 50px;
+	font-size: 20px;
+	cursor: pointer;
+	text-align: center;
+	text-decoration: none;
+	outline: none;
+	color: #fff;
+	background-color: dodgerblue;
+	border: none;
+	border-radius: 15px;
+	border-color: firebrick;
+	box-shadow: 0 9px #999;
+	margin: 0 auto 20px auto;
 }
 
 @mixin roomCode() {
-  margin-top: 10px;
-  color: #999;
+	margin-top: 10px;
+	color: #999;
+
+	h3 {
+		margin: 5px;
+	}
 }
 
-@mixin celeb() {
-  display: block;
+@mixin celebFeed($display) {
+	@include flex($display, row);
 
-  #celeb-feed {
-    color: #999;
-    list-style: none;
-  }
+	#celebFeed {
+		color: #999;
+		list-style: none;
+		text-align: center;
+	}
 }
 
+// recurring styles
+@mixin flex($display, $direction) {
+	display: $display;
+	justify-content: center;
+	flex-direction: $direction;
+	align-content: center;
+}
+
+@mixin categoryWrapper() {
+	.categoryWrapper {
+		display: flex;
+		flex-direction: column;
+		width: 100%;
+		text-align: center;
+	}
+}
+
+// not currently used
 @mixin timer() {
-  #timerBar {
-      width: 300px;
-      margin: 0 auto;
+	#timerBar {
+		width: 300px;
+		margin: 0 auto;
 
-      .inner {
-          height: 15px;
-          animation: timerBar-countdown;
-          animation-duration: 40s;
-          animation-iteration-count: 1;
-          animation-fill-mode: forwards;
-          animation-play-state: paused;
-          animation-timing-function: linear;
-      }
-  }
+		.inner {
+			height: 15px;
+			animation: timerBar-countdown;
+			animation-duration: 40s;
+			animation-iteration-count: 1;
+			animation-fill-mode: forwards;
+			animation-play-state: paused;
+			animation-timing-function: linear;
+		}
+	}
 }

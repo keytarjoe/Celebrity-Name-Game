@@ -1,96 +1,104 @@
-@import url('https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;700&display=swap");
 
 @import "mixins";
 
 body {
-  background-image: linear-gradient(to bottom right, white, #ff4d4d);
+	background-image: linear-gradient(to bottom right, white, #ff4d4d);
+	background-repeat: no-repeat;
+	height: 100%;
 }
 
-input[type=text] {
-    width: 196px;
-    height: 46px;
-    font-size: 18px;
-    text-align: center;
-    border-radius: 15px;
-    border-width: 2px;
-    border-style: solid;
-    border-color: #999;
-    margin-bottom: 12px;
+input[type="text"] {
+	width: 196px;
+	height: 46px;
+	font-size: 18px;
+	text-align: center;
+	border-radius: 15px;
+	border-width: 2px;
+	border-style: solid;
+	border-color: #999;
+	margin-bottom: 12px;
 }
 
 #header {
-    text-align: center;
-    width: 100%;
-    height: 50px;
-    line-height: 50px;
-    background-color: dodgerblue;
+	text-align: center;
+	width: 100%;
+	height: 50px;
+	line-height: 50px;
+	background-color: dodgerblue;
+}
+
+#roomCodeContainer {
+	@include roomCode();
 }
 
 #loginContainer {
-  @include login();
+	@include login();
 }
 
-// #or {
-//     width: 200px;
-//     text-align: center;
-// }
-
 #lobbyContainer {
-  @include lobby(none); // none
+	@include lobby(none); // none
 }
 
 #gameContainer {
-    @include game(none); // none
+	@include game(none); // none
 }
 
 #teamContainer {
-    @include team();
+	@include team(none); // none
 }
 
-#my-turn-container, #endContainer {
-    display: none;
+#celebFeedContainer {
+	@include celebFeed(none);
 }
 
-/*#player-container {
-    text-align: center;
-}*/
+#myTurnContainer,
+#endContainer {
+	display: none;
+	margin-bottom: 20px;
+
+	.hr {
+		width: 60%;
+		margin: 20px auto;
+	}
+
+	@include categoryWrapper();
+}
+
+#startGameButton {
+	@include button(none);
+}
 
 .btn {
-  @include button(inline-block);
+	@include button(inline-block);
 }
 
-.button:hover {background-color: #186EC4}
+.button:hover {
+	background-color: #186ec4;
+}
 
 .button:active {
-    background-color: #186EC4;
-    box-shadow: 0 5px #666;
-    transform: translateY(4px);
-}
-
-#start-game-button {
-    @include button(none);
-}
-
-#celeb-feed-container {
-    @include celeb();
+	background-color: #186ec4;
+	box-shadow: 0 5px #666;
+	transform: translateY(4px);
 }
 
 #timerContainer {
-  @include timer();
+	@include timer();
 }
 
 @keyframes timerBar-countdown {
-    0% {
-        width: 100%;
-        background: #0f0;
-    }
-    75% {
-        background: #0f0;
-    }
-    100% {
-        width: 0%;
-        background: #f00;
-    }
+	0% {
+		width: 100%;
+		background: #0f0;
+	}
+	75% {
+		background: #0f0;
+	}
+	100% {
+		width: 0%;
+		background: #f00;
+	}
 }
 
 /* Media Queries

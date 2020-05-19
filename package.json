@@ -1,24 +1,24 @@
 {
-  "name": "celebnamegame",
-  "version": "0.1.0",
-  "description": "Celebrity Name guessing game",
-  "main": "app.js",
-  "dependencies": {
-    "body-parser": "^1.19.0",
-    "express": "^4.17.1",
-    "express-session": "^1.17.1",
-    "express-socket.io-session": "^1.3.5",
-    "nodemon": "^2.0.4",
-    "node-sass": "^4.14.1",
-    "socket.io": "^2.3.0"
-  },
-  "author": "Joseph Benedetti",
-  "devDependencies": {
-    "eslint": "^6.8.0"
-  },
-  "scripts": {
-    "pretest": "eslint --ignore-path .gitignore .",
-    "scss": "node-sass --watch client/scss -o client/css",
-    "start": "ng serve --sourcemap=true"
-  }
+	"name": "celebnamegame",
+	"version": "0.1.0",
+	"description": "Celebrity Name guessing game",
+	"main": "app.js",
+	"dependencies": {
+		"body-parser": "^1.19.0",
+		"express": "^4.17.1",
+		"express-session": "^1.17.1",
+		"express-socket.io-session": "^1.3.5",
+		"node-sass": "^4.14.1",
+		"nodemon": "^2.0.4",
+		"socket.io": "^2.3.0"
+	},
+	"author": "Joseph Benedetti",
+	"devDependencies": {
+		"eslint": "^6.8.0"
+	},
+	"scripts": {
+		"pretest": "eslint --ignore-path .gitignore .",
+		"scss": "node-sass --watch client/scss -o client/css --source-map=true",
+		"start": "node app.js"
+	}
 }
