@@ -2,13 +2,13 @@ function render(event, data) {
 	//1
 	if (event === "renderLobby") {
 		$("#roomCodeContainer h3").html(
-			"Room Code: <strong>" + event.roomCode + "</strong>"
+			"Room Code: <strong>" + gameState.roomCode + "</strong>"
 		);
 		$("#loginContainer").css("display", "none");
 		$("#lobbyContainer").css("display", "flex");
 		$("#startGameButton").css("display", "block");
 		let celebNumber = 1;
-		for (i = 0; i < event.numberOfSuggestions; i++) {
+		for (i = 0; i < gameState.numberOfSuggestions; i++) {
 			$("#celebSuggestionList").append(
 				"<li><h2>Celebrity " +
 					celebNumber +
